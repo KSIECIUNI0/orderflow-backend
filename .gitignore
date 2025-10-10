@@ -47,8 +47,42 @@ CodeCoverage/
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
+*.coverage
+*.coveragexml
+*.trx
 
 # NUnit
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# .NET / RIDER / VS / VS CODE
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.idea/
+.vscode/
+*.csproj.user
+*.DotSettings.user
+*.iml
+out/
+
+#DOCKER / LOCALSTACK
+docker/.env
+docker/.env.*
+docker/.localstack/
+docker/localstack/
+docker/logs/
+docker/volumes/
+docker/tmp/
+docker/tmp-data/
+docker/desktop-containerd/
+docker/pgdata/
+docker/postgres-data
+docker/*-data/
+
+!docker/docker-compose.yml
+!docker/env.example
+!docker/Dockerfile*
