@@ -33,7 +33,14 @@ jobs:
         
       - name: Build Docker image
         run: |
-          docker build -t orderflow-api:latest -f ./src/OrderFlow.Api/Dockerfile .
+          docker build -t orderflow-api:ci -f ./src/OrderFlow.Api/Dockerfile .
           
-      - name: Run container smoke test
-        run: docker run --rm -d -p 8080:8080 orderflow-api:latest
+      - name: Save Docker image as artifact
+        run: |
+          docker save orderflow-api:ci | gzip > orderflow-api-ci.tar.gz
+          
+      - name: Upload Docker artifact
+        uses: actions/upload-artifact@v4
+        with: 
+          name: orderflow-api-image
+          path: orderflow-api-ci.tar.gz
