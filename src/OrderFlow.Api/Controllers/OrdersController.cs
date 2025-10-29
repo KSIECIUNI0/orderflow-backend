@@ -26,6 +26,17 @@ public class OrdersController : ControllerBase
         var result = await _mediator.Send(new GetAllOrdersQuery());
         return Ok(result);
     }
+    
+    /// <summary>
+    /// Get Order by id.
+    /// </summary>
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetOrderById(Guid id)
+    {
+        var result = await _mediator.Send(new GetOrderById(id));
+        
+        return result is null ? NotFound() : Ok(result);
+    }
 
     /// <summary>
     /// Create  new order.
@@ -37,7 +48,7 @@ public class OrdersController : ControllerBase
         var result = await _mediator.Send(command);
         
         return CreatedAtAction(
-            nameof(GetAll), // TO DO: Change to endpoint - get by id
+            nameof(GetOrderById),
             new { id = result.Id },
             result
         );

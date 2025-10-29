@@ -24,4 +24,9 @@ public class OrderRepository : IOrderRepository
     {
         return await _db.Orders.AsNoTracking().ToListAsync(cancellationToken);
     }
+
+    public async Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _db.Orders.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 }

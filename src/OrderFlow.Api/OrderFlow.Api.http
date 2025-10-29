@@ -5,10 +5,15 @@ POST {{host}}/api/orders
 Content-Type: application/json
 
 {
-  "productName": "Coca-Cola",
+  "productName": "Pepsi Zero",
   "quantity": 1
 }
 
 ### Get all orders
 GET {{host}}/api/orders
+Content-Type: application/json
+
+### Get by Id
+@orderId = 4040b8f1-c274-4b47-a943-6e58b4381ae8
+GET {{host}}/api/orders/{{orderId}}
 Content-Type: application/json
