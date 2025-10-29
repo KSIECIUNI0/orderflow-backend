@@ -18,4 +18,10 @@ public class Order
         ProductName = productName;
         Quantity = quantity;
     }
+
+    public void Update(string productName, int quantity)
+    {
+        ProductName = productName;
+        Quantity = quantity;
+    }
 }

@@ -1,4 +1,5 @@
 @host = http://localhost:5270
+@orderId = 91cf6983-17d7-4ef6-80d7-cc499108564d
 
 ### Create Order
 POST {{host}}/api/orders
@@ -14,6 +15,17 @@ GET {{host}}/api/orders
 Content-Type: application/json
 
 ### Get by Id
-@orderId = 4040b8f1-c274-4b47-a943-6e58b4381ae8
 GET {{host}}/api/orders/{{orderId}}
 Content-Type: application/json
+
+### Update order
+PUT {{host}}/api/orders/{{orderId}}
+Content-Type: application/json
+
+{
+  "productName": "Fanta",
+  "quantity": 99
+}
+
+### Delete order
+DELETE {{host}}/api/orders/{{orderId}}

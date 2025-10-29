@@ -15,8 +15,7 @@ public class OrderRepository : IOrderRepository
 
     public async Task<Order> AddAsync(Order order, CancellationToken cancellationToken = default)
     {
-        _db.Orders.Add(order);
-        await _db.SaveChangesAsync(cancellationToken);
+        await _db.Orders.AddAsync(order, cancellationToken);
         return order;
     }
 
@@ -28,5 +27,15 @@ public class OrderRepository : IOrderRepository
     public async Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _db.Orders.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public void Update(Order order)
+    {
+        _db.Orders.Update(order);
+    }
+
+    public void Delete(Order order)
+    {
+        _db.Orders.Remove(order);
     }
 }

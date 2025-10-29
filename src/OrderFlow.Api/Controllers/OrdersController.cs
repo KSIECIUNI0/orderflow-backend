@@ -17,9 +17,6 @@ public class OrdersController : ControllerBase
         _mediator = mediator;
     }
 
-    /// <summary>
-    /// Return list of all orders.
-    /// </summary>
     [HttpGet]
     public async Task<ActionResult<List<OrderResponse>>> GetAll()
     {
@@ -27,9 +24,6 @@ public class OrdersController : ControllerBase
         return Ok(result);
     }
     
-    /// <summary>
-    /// Get Order by id.
-    /// </summary>
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetOrderById(Guid id)
     {
@@ -38,9 +32,6 @@ public class OrdersController : ControllerBase
         return result is null ? NotFound() : Ok(result);
     }
 
-    /// <summary>
-    /// Create  new order.
-    /// </summary>
     [HttpPost]
     public async Task<IActionResult> CreateOrder([FromBody] CreateOrderRequest request)
     {
@@ -52,5 +43,23 @@ public class OrdersController : ControllerBase
             new { id = result.Id },
             result
         );
+    }
+
+    [HttpPut("{id:guid}")]
+    public async Task<IActionResult> UpdateOrder(Guid id, [FromBody] CreateOrderRequest request)
+    {
+        var command = new UpdateOrderCommand(id, request.ProductName, request.Quantity);
+        var success = await _mediator.Send(command);
+        
+        return success ? NoContent() : NotFound();
+    }
+
+    [HttpDelete(("{id:guid}"))]
+    public async Task<IActionResult> DeleteOrder(Guid id)
+    {
+        var command = new DeleteOrderCommand(id);
+        var success = await _mediator.Send(command);
+        
+        return success ? NoContent() : NotFound();
     }
 }
