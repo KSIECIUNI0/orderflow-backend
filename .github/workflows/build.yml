@@ -31,12 +31,25 @@ jobs:
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
         
-      - name: Generate coverage report
-        run: reportgenerator -reports:"tests/OrderFlow.UnitTests/TestResults/**/*.xml" -targetdir:coveragereport -reporttypes:TextSummary
+      - name: Generate code coverage report
+        run: |
+          reportgenerator \
+            -reports:"tests/OrderFlow.UnitTests/TestResults/**/*.xml" \
+            -targetdir:"coverage-report-html" \
+            -reporttypes:Html
+
+      - name: Upload coverage report artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: coverage-report-html
+        
+      - name: Generate text summary of coverage report
+        run: reportgenerator -reports:"tests/OrderFlow.UnitTests/TestResults/**/*.xml" -targetdir:coverage-report-text -reporttypes:TextSummary
         
       - name: Enforce coverage threshold
         run: |
-          COVERAGE=$(grep -oP 'Line coverage: \K[0-9]+' coveragereport/Summary.txt)
+          COVERAGE=$(grep -oP 'Line coverage: \K[0-9]+' coverage-report-text/Summary.txt)
           echo "Coverage is $COVERAGE%"
           if [ $COVERAGE -lt 80 ]; then
           echo "❌ Coverage below 80%!"
