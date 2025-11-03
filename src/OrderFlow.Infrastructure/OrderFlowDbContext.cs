@@ -16,8 +16,13 @@ public class OrderFlowDbContext : DbContext
         modelBuilder.Entity<Order>(entity =>
         {
             entity.HasKey(e => e.Id);
-            entity.Property(e => e.ProductName).IsRequired();
-            entity.Property(e => e.Quantity).IsRequired();
+            
+            entity.Property(e => e.ProductName)
+                .HasMaxLength(100)
+                .IsRequired();
+            
+            entity.Property(e => e.Quantity)
+                .IsRequired();
         });
     }
 }
