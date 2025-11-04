@@ -60,12 +60,10 @@ public class OrderTests
     [Fact]
     public void Update_ShouldThrowAnArgumentException_WhenProductNameIsEmpty()
     {
-        var sut = CreateSut();
-        
         const int newQuantity = 2;
         var newProductName = string.Empty;
         
-        var act = () => sut.Update(newProductName, newQuantity);
+        var act = () => Sut().Update(newProductName, newQuantity);
 
         act.Should().Throw<ArgumentException>()
             .WithParameterName("productName");
@@ -74,12 +72,10 @@ public class OrderTests
     [Fact]
     public void Update_ShouldThrowAnArgumentException_WhenProductNameIsTooLong()
     {
-        var sut = CreateSut();
-        
         const int newQuantity = 2;
         var newProductName = new string('x', MaxProductNameLength + 50);
         
-        var act = () => sut.Update(newProductName, newQuantity);
+        var act = () => Sut().Update(newProductName, newQuantity);
 
         act.Should().Throw<ArgumentOutOfRangeException>()
             .WithParameterName("productName");
@@ -90,11 +86,9 @@ public class OrderTests
     [InlineData(0)]
     public void Update_ShouldThrowAnArgumentException_WhenQuantityIsNegativeOrZero(int newQuantity)
     {
-        var sut = CreateSut();
-        
         var newProductName = new string('y', MaxProductNameLength);
         
-        var act = () => sut.Update(newProductName, newQuantity);
+        var act = () => Sut().Update(newProductName, newQuantity);
 
         act.Should().Throw<ArgumentOutOfRangeException>()
             .WithParameterName("quantity");
@@ -103,7 +97,7 @@ public class OrderTests
     [Fact]
     public void Update_ShouldUpdateAnInstance_WhenProductNameIsNotEmptyAndQuantityIsGreaterThanZero()
     {
-        var sut = CreateSut();
+        var sut = Sut();
         var expectedId = sut.Id;
         const string newProductName = "new product name";
         const int newQuantity = 2;
@@ -115,6 +109,5 @@ public class OrderTests
         sut.Quantity.Should().Be(newQuantity);
     }
 
-    private static Order CreateSut()
-        => new("product name", 1);
+    private static Order Sut() => new("product name", 1);
 }
