@@ -5,30 +5,30 @@ namespace OrderFlow.UnitTests.Domain.Entities;
 
 public class OrderTests
 {
+    private const int MaxProductNameLength = 100;
+    
     [Fact]
     public void Ctor_ShouldThrowAnArgumentException_WhenProductNameIsEmpty()
     {
         const int quantity = 1;
-        const string expectedErrorMessage = "Product name cannot be empty";
         var productName = string.Empty;
         
         var act = () => new Order(productName, quantity);
 
         act.Should().Throw<ArgumentException>()
-            .WithMessage(expectedErrorMessage);
+            .WithParameterName("productName");
     }
     
     [Fact]
     public void Ctor_ShouldThrowAnArgumentException_WhenProductNameIsTooLong()
     {
         const int quantity = 1;
-        const string expectedErrorMessage = "Product name is too long";
-        var productName = new string('x', 150);
+        var productName = new string('x', MaxProductNameLength + 50);
         
         var act = () => new Order(productName, quantity);
 
-        act.Should().Throw<ArgumentException>()
-            .WithMessage(expectedErrorMessage);
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithParameterName("productName");
     }
     
     [Theory]
@@ -36,13 +36,12 @@ public class OrderTests
     [InlineData(0)]
     public void Ctor_ShouldThrowAnArgumentException_WhenQuantityIsNegativeOrZero(int quantity)
     {
-        const string productName = "product name";
-        const string expectedErrorMessage = "Quantity must be greater than zero";
+        var productName = new string('x', MaxProductNameLength);
         
         var act = () => new Order(productName, quantity);
 
-        act.Should().Throw<ArgumentException>()
-            .WithMessage(expectedErrorMessage);
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithParameterName("quantity");
     }
     
     [Fact]
@@ -53,7 +52,6 @@ public class OrderTests
         
         var result = new Order(productName, quantity);
 
-        result.Should().NotBeNull();
         result.Id.Should().NotBeEmpty();
         result.ProductName.Should().Be(productName);
         result.Quantity.Should().Be(quantity);
@@ -65,13 +63,12 @@ public class OrderTests
         var sut = CreateSut();
         
         const int newQuantity = 2;
-        const string expectedErrorMessage = "Product name cannot be empty";
         var newProductName = string.Empty;
         
         var act = () => sut.Update(newProductName, newQuantity);
 
         act.Should().Throw<ArgumentException>()
-            .WithMessage(expectedErrorMessage);
+            .WithParameterName("productName");
     }
     
     [Fact]
@@ -80,13 +77,12 @@ public class OrderTests
         var sut = CreateSut();
         
         const int newQuantity = 2;
-        const string expectedErrorMessage = "Product name is too long";
-        var newProductName = new string('x', 150);
+        var newProductName = new string('x', MaxProductNameLength + 50);
         
         var act = () => sut.Update(newProductName, newQuantity);
 
-        act.Should().Throw<ArgumentException>()
-            .WithMessage(expectedErrorMessage);
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithParameterName("productName");
     }
     
     [Theory]
@@ -96,13 +92,12 @@ public class OrderTests
     {
         var sut = CreateSut();
         
-        const string expectedErrorMessage = "Quantity must be greater than zero";
-        const string newProductName = "new product name";
+        var newProductName = new string('y', MaxProductNameLength);
         
         var act = () => sut.Update(newProductName, newQuantity);
 
-        act.Should().Throw<ArgumentException>()
-            .WithMessage(expectedErrorMessage);
+        act.Should().Throw<ArgumentOutOfRangeException>()
+            .WithParameterName("quantity");
     }
 
     [Fact]
@@ -121,5 +116,5 @@ public class OrderTests
     }
 
     private static Order CreateSut()
-        => new Order("product name", 1);
+        => new("product name", 1);
 }

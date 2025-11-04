@@ -12,30 +12,27 @@ public class Order
         string productName,
         int quantity)
     {
+        ValidateInvariants(productName, quantity);
+        
         Id = Guid.NewGuid();
         ProductName = productName;
         Quantity = quantity;
-
-        ValidateInvariants();
     }
 
     public void Update(string productName, int quantity)
     {
+        ValidateInvariants(productName, quantity);
+        
         ProductName = productName;
         Quantity = quantity;
-
-        ValidateInvariants();
     }
     
-    private void ValidateInvariants()
+    private static void ValidateInvariants(
+        string productName,
+        int quantity)
     {
-        if (string.IsNullOrWhiteSpace(ProductName))
-            throw new ArgumentException("Product name cannot be empty");
-        
-        if (ProductName.Length > 100)
-            throw new ArgumentException("Product name is too long");
-        
-        if (Quantity <= 0)
-            throw new ArgumentException("Quantity must be greater than zero");
+        ArgumentException.ThrowIfNullOrWhiteSpace(productName);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(productName.Length, 100, nameof(productName));
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(quantity);
     }
 }
