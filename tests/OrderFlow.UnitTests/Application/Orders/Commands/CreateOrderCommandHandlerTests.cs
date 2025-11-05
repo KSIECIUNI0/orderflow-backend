@@ -27,7 +27,7 @@ public class CreateOrderCommandHandlerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((Order o, CancellationToken _) =>
             {
-                o.GetType().GetProperty("Id")!.SetValue(o, savedOrderId);
+                typeof(Order).GetProperty("Id")!.SetValue(o, savedOrderId);
                 return o;
             });
 
