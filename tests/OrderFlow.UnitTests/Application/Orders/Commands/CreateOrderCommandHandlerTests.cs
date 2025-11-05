@@ -9,8 +9,8 @@ namespace OrderFlow.UnitTests.Application.Orders.Commands;
 
 public class CreateOrderCommandHandlerTests
 {
-    private readonly Mock<IOrderRepository> _orderRepository = new();
-    private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly Mock<IOrderRepository> _orderRepositoryMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
 
     [Fact]
     public async Task Handle_ShouldReturnOrderResponse_WhenPassProductNameAndQuantity()
@@ -20,7 +20,7 @@ public class CreateOrderCommandHandlerTests
         var savedOrderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var command = new CreateOrderCommand(productName, quantity);
 
-        _orderRepository
+        _orderRepositoryMock
             .Setup(repo => repo.AddAsync(
                 It.Is<Order>(o =>
                     o.ProductName == productName && o.Quantity == quantity),
@@ -33,13 +33,13 @@ public class CreateOrderCommandHandlerTests
 
         var result = await Sut().Handle(command, CancellationToken.None);
 
-        _orderRepository.Verify(
+        _orderRepositoryMock.Verify(
             or => or.AddAsync(
                 It.Is<Order>(o =>
                     o.ProductName == productName && o.Quantity == quantity),
                 It.IsAny<CancellationToken>()),
             Times.Once);
-        _unitOfWork.Verify(
+        _unitOfWorkMock.Verify(
             uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
         
@@ -60,5 +60,5 @@ public class CreateOrderCommandHandlerTests
     }
     
     private CreateOrderCommandHandler Sut() =>
-        new (_orderRepository.Object, _unitOfWork.Object);
+        new (_orderRepositoryMock.Object, _unitOfWorkMock.Object);
 }

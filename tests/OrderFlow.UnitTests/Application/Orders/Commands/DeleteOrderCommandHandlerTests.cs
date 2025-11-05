@@ -9,8 +9,8 @@ namespace OrderFlow.UnitTests.Application.Orders.Commands;
 
 public class DeleteOrderCommandHandlerTests
 {
-    private readonly Mock<IOrderRepository> _orderRepository = new();
-    private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private readonly Mock<IOrderRepository> _orderRepositoryMock = new();
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
 
     [Fact]
     public async Task Handle_ShouldReturnFalse_WhenOrderDoesNotExist()
@@ -18,7 +18,7 @@ public class DeleteOrderCommandHandlerTests
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var command = new DeleteOrderCommand(orderId);
 
-        _orderRepository
+        _orderRepositoryMock
             .Setup(or => or.GetByIdAsync(
                 It.Is<Guid>(id => id == orderId),
                 It.IsAny<CancellationToken>()))
@@ -26,15 +26,15 @@ public class DeleteOrderCommandHandlerTests
 
         var result = await Sut().Handle(command, CancellationToken.None);
         
-        _orderRepository.Verify(
+        _orderRepositoryMock.Verify(
             or => or.GetByIdAsync(
                 It.Is<Guid>(id => id == orderId),
                 It.IsAny<CancellationToken>()),
             Times.Once);
-        _orderRepository.Verify(
+        _orderRepositoryMock.Verify(
             or => or.Delete(It.IsAny<Order>()),
             Times.Never);
-        _unitOfWork.Verify(
+        _unitOfWorkMock.Verify(
             uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Never);
         
@@ -49,7 +49,7 @@ public class DeleteOrderCommandHandlerTests
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var command = new DeleteOrderCommand(orderId);
         
-        _orderRepository
+        _orderRepositoryMock
             .Setup(or => or.GetByIdAsync(
                 It.Is<Guid>(id => id == orderId),
                 It.IsAny<CancellationToken>()))
@@ -62,18 +62,18 @@ public class DeleteOrderCommandHandlerTests
         
         var result = await Sut().Handle(command, CancellationToken.None);
         
-        _orderRepository.Verify(
+        _orderRepositoryMock.Verify(
             or => or.GetByIdAsync(
                 It.Is<Guid>(id => id == orderId),
                 It.IsAny<CancellationToken>()),
             Times.Once);
-        _orderRepository.Verify(
+        _orderRepositoryMock.Verify(
             or => or.Delete(It.Is<Order>(o => 
                 o.Id == orderId 
                 && o.ProductName == productName 
                 && o.Quantity == quantity)),
             Times.Once);
-        _unitOfWork.Verify(
+        _unitOfWorkMock.Verify(
             uow => uow.SaveChangesAsync(It.IsAny<CancellationToken>()),
             Times.Once);
         
@@ -87,7 +87,7 @@ public class DeleteOrderCommandHandlerTests
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var command = new DeleteOrderCommand(orderId);
 
-        _orderRepository
+        _orderRepositoryMock
             .Setup(or => or.GetByIdAsync(
                 It.Is<Guid>(id => id == orderId),
                 It.IsAny<CancellationToken>()))
@@ -101,5 +101,5 @@ public class DeleteOrderCommandHandlerTests
     }
     
     private DeleteOrderCommandHandler Sut() 
-        => new(_orderRepository.Object, _unitOfWork.Object);
+        => new(_orderRepositoryMock.Object, _unitOfWorkMock.Object);
 }
