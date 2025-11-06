@@ -3,16 +3,16 @@ using OrderFlow.Application.Orders.DTOs;
 
 namespace OrderFlow.Application.Orders.Queries;
 
-public class GetOrderByIdHandler : IRequestHandler<GetOrderById, OrderResponse?>
+public class GetOrderByIdQueryHandler : IRequestHandler<GetOrderByIdQuery, OrderResponse?>
 {
     private readonly IOrderRepository _orderRepository;
 
-    public GetOrderByIdHandler(IOrderRepository orderRepository)
+    public GetOrderByIdQueryHandler(IOrderRepository orderRepository)
     {
         _orderRepository = orderRepository;
     }
 
-    public async Task<OrderResponse?> Handle(GetOrderById request, CancellationToken cancellationToken)
+    public async Task<OrderResponse?> Handle(GetOrderByIdQuery request, CancellationToken cancellationToken)
     {
         var order = await _orderRepository.GetByIdAsync(request.Id, cancellationToken);
 

@@ -20,14 +20,17 @@ public class OrdersController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<List<OrderResponse>>> GetAll()
     {
-        var result = await _mediator.Send(new GetAllOrdersQuery());
+        var query = new GetAllOrdersQuery();
+        var result = await _mediator.Send(query);
+        
         return Ok(result);
     }
     
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetOrderById(Guid id)
     {
-        var result = await _mediator.Send(new GetOrderById(id));
+        var query = new GetOrderByIdQuery(id);
+        var result = await _mediator.Send(query);
         
         return result is null ? NotFound() : Ok(result);
     }
