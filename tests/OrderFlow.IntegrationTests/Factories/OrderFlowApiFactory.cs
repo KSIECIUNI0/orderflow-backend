@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OrderFlow.Infrastructure;
+using OrderFlow.IntegrationTests.Helpers;
 
 namespace OrderFlow.IntegrationTests.Factories;
 
@@ -15,6 +16,8 @@ public class OrderFlowApiFactory : WebApplicationFactory<Program>
     {
         _connectionString = connectionString;
     }
+
+    public OrderDataHelper OrderDataHelper => new(Services);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

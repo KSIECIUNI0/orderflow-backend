@@ -9,16 +9,17 @@ namespace OrderFlow.IntegrationTests.Controllers;
 [Collection("Database collection")]
 public class OrdersControllerTests
 {
+    private readonly OrderFlowApiFactory _factory;
     private readonly HttpClient _client;
 
     public OrdersControllerTests(PostgreSqlContainerFixture fixture)
     {
-        var factory = new OrderFlowApiFactory(fixture.ConnectionString);
-        _client = factory.CreateClient();
+        _factory = new OrderFlowApiFactory(fixture.ConnectionString);
+        _client = _factory.CreateClient();
     }
     
     [Fact]
-    public async Task CreateOrder_Then_GetOrderById_ReturnsOrder()
+    public async Task CreateOrder_Then_GetOrderById_ShouldReturnOrder_WhenCallWithValidModel()
     {
         const string productName = "product name";
         const int quantity = 1;
@@ -47,7 +48,7 @@ public class OrdersControllerTests
     }
     
     [Fact]
-    public async Task CreateOrder_WithInvalidModel_ReturnsBadRequest()
+    public async Task CreateOrder_ShouldReturnBadRequest_WhenCallWithInvalidModel()
     {
         var request = new CreateOrderRequest("", -1);
 
@@ -57,5 +58,65 @@ public class OrdersControllerTests
             .Be400BadRequest()
             .And.HaveError("ProductName", "Product name is required")
             .And.HaveError("Quantity", "Quantity must be greater than 0");
+    }
+
+    [Fact]
+    public async Task GetOrderById_ShouldReturnNotFound_WhenCallWithNotExistingId()
+    {
+        var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        
+        var response  = await _client.GetAsync($"/api/orders/{orderId}");
+        
+        response.Should().Be404NotFound();
+    }
+
+    [Fact]
+    public async Task GetAll_ShouldReturnAllOrders()
+    {
+        var orderDataHelper = _factory.OrderDataHelper;
+        
+        const string order1ProductName = "product name 1";
+        const int order1Quantity = 1;
+        const string order2ProductName = "product name 2";
+        const int order2Quantity = 2;
+        var order1Id = await orderDataHelper.InsertAsync(order1ProductName, order1Quantity);
+        var order2Id = await orderDataHelper.InsertAsync(order2ProductName, order2Quantity);
+        
+        var response = await _client.GetAsync("api/orders");
+        
+        response.Should()
+            .Be200Ok()
+            .And.Satisfy<IEnumerable<OrderResponse>>(model => 
+                model.Should()
+                    .HaveCount(2)
+                    .And.SatisfyRespectively( first =>
+                    {
+                        first.Id.Should().Be(order1Id);
+                        first.ProductName.Should().Be(order1ProductName);
+                        first.Quantity.Should().Be(order1Quantity);
+                    },
+                    second =>
+                    {
+                        second.Id.Should().Be(order2Id);
+                        second.ProductName.Should().Be(order2ProductName);
+                        second.Quantity.Should().Be(order2Quantity);
+                    })
+            );
+    }
+
+    [Fact]
+    public async Task GetAll_ShouldReturnEmptyCollection_WhenThereAreNoOrders()
+    {
+        var orderDataHelper = _factory.OrderDataHelper;
+        var orderCount = await orderDataHelper.CountAsync();
+
+        orderCount.Should().Be(0);
+        
+        var response = await _client.GetAsync("api/orders");
+
+        response.Should()
+            .Be200Ok()
+            .And.Satisfy<IEnumerable<OrderResponse>>(model =>
+                model.Should().BeEmpty());
     }
 }

@@ -16,10 +16,6 @@ public class ExceptionHandlingMiddleware : IMiddleware
         {
             await WriteError(context, ex.Message, HttpStatusCode.BadRequest);
         }
-        catch (Exception)
-        {
-            await WriteError(context, "Unexpected server error occurred", HttpStatusCode.InternalServerError);
-        }
     }
 
     private static Task WriteError(HttpContext context, string message, HttpStatusCode statusCode)
