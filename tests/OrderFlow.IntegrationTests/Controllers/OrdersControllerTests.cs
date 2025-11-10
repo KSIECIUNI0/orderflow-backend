@@ -53,6 +53,9 @@ public class OrdersControllerTests
 
         var response = await _client.PostAsJsonAsync("/api/orders", request);
 
-        response.Should().Be500InternalServerError();
+        response.Should()
+            .Be400BadRequest()
+            .And.HaveError("ProductName", "Product name is required")
+            .And.HaveError("Quantity", "Quantity must be greater than 0");
     }
 }
