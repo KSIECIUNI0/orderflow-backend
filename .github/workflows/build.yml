@@ -10,10 +10,11 @@ jobs:
   build-test-docker:
     runs-on: ubuntu-latest
     
-    services:
-      docker:
-        image: docker:24.0.2
-        options: --privileged
+    env:
+      DOTNET_EnableDiagnostics: 1
+      TESTCONTAINERS_RYUK_DISABLED: true
+      DOCKER_HOST: unix:///var/run/docker.sock
+      TESTCONTAINERS_HOST_OVERRIDE: localhost
     
     steps:
       - name: Checkout repository
@@ -31,10 +32,6 @@ jobs:
         run: dotnet build --configuration Release --no-restore
         
       - name: Run Tests (Unit + Integration)
-        env:
-          DOTNET_EnableDiagnostics: 1
-          TESTCONTAINERS_RYUK_DISABLED: false
-          TESTCONTAINERS_HOST_OVERRIDE: host.docker.internal
         run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test_results.trx" --collect:"XPlat Code Coverage"
 
       - name: Upload Test Results (TRX)
@@ -67,8 +64,8 @@ jobs:
           COVERAGE=$(grep -oP 'Line coverage: \K[0-9]+' coverage-report-text/Summary.txt)
           echo "Coverage is $COVERAGE%"
           if [ $COVERAGE -lt 80 ]; then
-          echo "❌ Coverage below 80%!"
-          exit 1
+            echo "❌ Coverage below 80%!"
+            exit 1
           fi
         
       - name: Set up Docker Buildx
