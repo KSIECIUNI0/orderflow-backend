@@ -8,7 +8,7 @@ on:
 
 jobs:
   coverage-badge:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
 
     steps:
