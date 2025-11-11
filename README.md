@@ -1,6 +1,7 @@
 # OrderFlow 🧾
 
 ![Build Status](https://github.com/KSIECIUNI0/orderflow-backend/actions/workflows/build.yml/badge.svg)
+![Coverage](./coverage-badge.svg)
 
 OrderFlow is a backend service built to demonstrate modern .NET architectural patterns and provide scalable order management functionality.
 
