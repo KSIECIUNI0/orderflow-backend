@@ -10,6 +10,11 @@ jobs:
   build-test-docker:
     runs-on: ubuntu-latest
     
+    services:
+      docker:
+        image: docker:24.0.2
+        options: --privileged
+    
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,8 +30,20 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
         
-      - name: Run unit tests with coverage
-        run: dotnet test --collect:"XPlat Code Coverage"
+      - name: Run Tests (Unit + Integration)
+          env:
+            DOTNET_EnableDiagnostics: 1
+            TESTCONTAINERS_RYUK_DISABLED: false
+            TESTCONTAINERS_HOST_OVERRIDE: host.docker.internal
+          run: dotnet test --no-build --configuration Release \
+            --logger "trx;LogFileName=test_results.trx" \
+            --collect:"XPlat Code Coverage"
+
+      - name: Upload Test Results (TRX)
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: "**/*.trx"
         
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
