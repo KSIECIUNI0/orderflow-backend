@@ -33,4 +33,12 @@ public class OrderDataHelper
 
         return await db.Orders.CountAsync();
     }
+    
+    public async Task ClearAsync()
+    {
+        using var scope = _services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<OrderFlowDbContext>();
+        
+        await db.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Orders\" RESTART IDENTITY;");
+    }
 }
