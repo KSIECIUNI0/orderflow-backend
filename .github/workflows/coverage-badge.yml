@@ -28,6 +28,7 @@ jobs:
           workflow_conclusion: success
           name: coverage-report-text
           path: coverage-report-text
+          run_id: ${{ github.event.workflow_run.id }}
 
       - name: Extract coverage percentage
         id: extract_coverage
