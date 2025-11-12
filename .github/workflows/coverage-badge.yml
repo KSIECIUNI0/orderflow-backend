@@ -7,6 +7,7 @@ on:
       - completed
 
 permissions:
+  actions: read
   contents: write
 
 jobs:
@@ -20,16 +21,18 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download coverage artifact
-        uses: actions/download-artifact@v4
+      - name: Download artifact from previous run
+        uses: dawidd6/action-download-artifact@v2
         with:
+          workflow: "Build & Test & Docker"
+          workflow_conclusion: success
           name: coverage-report-text
           path: coverage-report-text
 
       - name: Extract coverage percentage
         id: extract_coverage
         run: |
-          FILE=$(ls coverage/Summary.txt)
+          FILE=$(ls coverage-report-text/Summary.txt)
           COVERAGE=$(grep -oP 'Line coverage: \K[0-9]+' "$FILE")
           echo "COVERAGE=$COVERAGE" >> $GITHUB_ENV
           echo "Coverage detected: $COVERAGE%"
