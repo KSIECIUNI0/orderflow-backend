@@ -1,29 +1,108 @@
-# orderflow-backend
+# OrderFlow 🧾
+
+![Build Status](https://github.com/KSIECIUNI0/orderflow-backend/actions/workflows/build.yml/badge.svg)
+![Coverage](./coverage-badge.svg)
+
+OrderFlow is a backend service built to demonstrate modern .NET architectural patterns and provide scalable order management functionality.
+
+The solution is designed with high maintainability and long-term extensibility in mind, leveraging:
+
+- Clean Architecture
+- Domain-Driven Design principles
+- CQRS with MediatR
+- Entity Framework Core + PostgreSQL
+- Repository & Unit of Work patterns
+- Docker for local development
+- Automated CI pipeline (GitHub Actions)
+
+---
+
+## 🧠 Architecture Overview
 
 ```
-OrderFlow/
-├── src/
-│    ├── OrderFlow.Api/           # main WebAPI (.NET 9)
-│    ├── OrderFlow.Domain/        # entities, aggregates, ValueObjects
-│    ├── OrderFlow.Application/   # CQRS, MediatR, business logic
-│    ├── OrderFlow.Infrastructure/# EF Core, repositories, AWS SDK
-│    └── OrderFlow.Worker/        # background service (SQS)
-├── tests/
-│    ├── OrderFlow.UnitTests/
-│    └── OrderFlow.IntegrationTests/
-├── infra/
-│    └── terraform/               # IaC
-├── docker/
-│    └── docker-compose.yml       # LocalStack + SQL + API + Worker
-└── .github/workflows/            # CI/CD pipeline
+                       ┌────────────────────────────────────┐
+                       │           Presentation             │
+                       │        (OrderFlow.Api Layer)       │
+                       │  - Controllers                     │
+HTTP                   │  - Model binding                   │
+Requests  ───────────▶ │  - API Contracts (DTO requests)    │
+                       └────────────────────────────────────┘
+                                         │
+                                         ▼
+                       ┌────────────────────────────────────┐
+                       │          Application Layer         │
+                       │  - CQRS (Commands + Queries)       │
+                       │  - MediatR Handlers                │
+                       │  - DTO responses                   │
+                       └────────────────────────────────────┘
+                                         │
+                                         ▼
+                       ┌────────────────────────────────────┐
+                       │             Domain Layer           │
+                       │  - Entities / Aggregates           │
+                       │  - Business rules / Invariants     │
+                       └────────────────────────────────────┘
+                                         │
+                                         ▼
+                       ┌────────────────────────────────────┐
+                       │         Infrastructure Layer       │
+                       │  - EF Core                         │
+                       │  - DbContext                       │
+                       │  - Repositories + Unit of Work     │
+                       │  - Migrations                      │
+                       └────────────────────────────────────┘
+                                         │
+                                         ▼
+                                   PostgreSQL DB
+                                   (Docker Compose)
 ```
 
-## Pre Requirements
+---
 
+## 🚀 Technology Stack
+
+| Component | Stack |
+|--|--|
+| Runtime | .NET 9 |
+| Architecture | Clean Architecture + CQRS |
+| Database | PostgreSQL (via Docker) |
+| ORM | Entity Framework Core 9 |
+| Messaging | MediatR |
+| Tests | xUnit |
+| DevOps | Docker, GitHub Actions |
+
+---
+
+## 📦 Solution Structure
+
+```
+OrderFlow.sln
+|
+├─ src/
+│  ├─ OrderFlow.Api/
+│  ├─ OrderFlow.Application/
+│  ├─ OrderFlow.Domain/
+│  └─ OrderFlow.Infrastructure/
+|
+├─ tests/
+│  └─ OrderFlow.UnitTests/
+|
+└─ docker/
+   └─ docker-compose.yml
+```
+
+---
+
+## ▶️ Local Development
+
+### Pre Requirements
+
+#### Install:
 * .NET 9 SDK
 * Docker
 * awscli
-  * aws configure:
+
+#### AWS configuration:
   ```
   AWS Access Key ID [None]: test
   AWS Secret Access Key [None]: test
@@ -31,15 +110,57 @@ OrderFlow/
   Default output format [None]: json 
   ```
 
-## Local development
-* Run docker compose:
-```
-docker-compose up -d
+### Run infrastructure
+
+```bash
+docker compose up -d
 ```
 
-## Tips
-### AWS CLI
-#### List buckets
+### Apply migrations
+
+```bash
+cd src/OrderFlow.Infrastructure
+dotnet ef database update
 ```
-aws --endpoint-url=http://localhost:4566 s3 ls
+
+### Run API
+
+```bash
+cd ../OrderFlow.Api
+dotnet run
+```
+
+API → http://localhost:5270
+
+---
+
+## ✅ HTTP Test Examples
+
+```http
+@host = http://localhost:5270
+
+### Create order
+POST {{host}}/api/orders
+Content-Type: application/json
+
+{
+  "productName": "Coca-Cola",
+  "quantity": 1
+}
+
+### Get all orders
+GET {{host}}/api/orders
+Accept: application/json
+```
+
+---
+
+## 🔄 CI Pipeline
+
+✔️ Restore → Build → Test  
+✔️ Publish artifact of API
+
+Workflow location:
+```
+.github/workflows/build.yml
 ```

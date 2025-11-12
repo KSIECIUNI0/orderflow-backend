@@ -1,41 +1,51 @@
+using FluentValidation;
+using Microsoft.EntityFrameworkCore;
+using OrderFlow.Api.Middleware;
+using OrderFlow.Application.Orders;
+using OrderFlow.Application.Orders.Commands;
+using OrderFlow.Application.Orders.Validators;
+using OrderFlow.Domain.Abstractions;
+using OrderFlow.Infrastructure;
+using OrderFlow.Infrastructure.Orders;
+using OrderFlow.Infrastructure.Persistence;
+using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddDbContext<OrderFlowDbContext>(options =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CreateOrderCommandHandler>());
+builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderRequestValidator>();
+builder.Services.AddFluentValidationAutoValidation(options =>
+{
+    options.DisableBuiltInModelValidation = true;
+});
+
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+builder.Services.AddTransient<ExceptionHandlingMiddleware>();
+
+builder.Services.AddControllers();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.MapControllers();
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+await app.RunAsync();
 
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
-
-app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
+[System.Diagnostics.CodeAnalysis.SuppressMessage(
+    "Major Code Smell",
+    "S1118:Utility classes should not have public constructors",
+    Justification = "Required for WebApplicationFactory test host discovery.")]
+public partial class Program { }

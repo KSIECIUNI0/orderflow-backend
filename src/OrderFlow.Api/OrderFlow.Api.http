@@ -1,6 +1,31 @@
-@OrderFlow.Api_HostAddress = http://localhost:5270
+@host = http://localhost:5270
+@orderId = 91cf6983-17d7-4ef6-80d7-cc499108564d
 
-GET {{OrderFlow.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Create Order
+POST {{host}}/api/orders
+Content-Type: application/json
 
-###
+{
+  "productName": "Pepsi Zero",
+  "quantity": 1
+}
+
+### Get all orders
+GET {{host}}/api/orders
+Content-Type: application/json
+
+### Get by Id
+GET {{host}}/api/orders/{{orderId}}
+Content-Type: application/json
+
+### Update order
+PUT {{host}}/api/orders/{{orderId}}
+Content-Type: application/json
+
+{
+  "productName": "Fanta",
+  "quantity": 99
+}
+
+### Delete order
+DELETE {{host}}/api/orders/{{orderId}}
