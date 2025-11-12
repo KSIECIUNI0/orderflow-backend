@@ -59,6 +59,12 @@ jobs:
       - name: Generate text summary of coverage report
         run: reportgenerator -reports:"tests/OrderFlow.UnitTests/TestResults/**/*.xml" -targetdir:coverage-report-text -reporttypes:TextSummary
         
+      - name: Upload text coverage summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report-text
+          path: coverage-report-text
+        
       - name: Enforce coverage threshold
         run: |
           COVERAGE=$(grep -oP 'Line coverage: \K[0-9]+' coverage-report-text/Summary.txt)
