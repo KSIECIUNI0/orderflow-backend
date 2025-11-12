@@ -6,6 +6,9 @@ on:
     types:
       - completed
 
+permissions:
+  contents: write
+
 jobs:
   coverage-badge:
     if: ${{ github.event.workflow_run.conclusion == 'success' && (github.event.workflow_run.head_branch == 'main' || github.event.workflow_run.head_branch == 'develop') }}
@@ -21,7 +24,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-report-text
-          path: coverage
+          path: coverage-report-text
 
       - name: Extract coverage percentage
         id: extract_coverage
