@@ -15,27 +15,26 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Install tools (ReportGenerator & SonarScanner)
+      - name: Install tools
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.1.26
-          dotnet tool install --global dotnet-sonarscanner --version 5.13.0
           echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
 
-      - name: SonarScanner Begin
+      - name: Begin SonarScanner
         run: |
+          dotnet tool install --global dotnet-sonarscanner --version 5.13.0
+          echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
           dotnet sonarscanner begin \
             /k:"KSIECIUNI0_orderflow-backend" \
             /o:"ksieciuni0" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
       - name: Restore
         run: dotnet restore
@@ -43,30 +42,35 @@ jobs:
       - name: Build
         run: dotnet build --no-incremental
 
-      - name: Run tests with coverage (XPlat)
+      - name: Test with coverage
         run: |
           dotnet test \
             --collect:"XPlat Code Coverage" \
-            --results-directory ./TestResults
+            --results-directory TestResults
 
-      - name: Convert coverage to SonarQube format
+      - name: Generate SonarQube XML
         run: |
           reportgenerator \
             -reports:TestResults/*/coverage.cobertura.xml \
-            -targetdir:TestResults/coverage-report \
+            -targetdir:coverage-report \
             -reporttypes:SonarQube
 
-      - name: SonarScanner End
+      - name: End SonarScanner (NO coverage here!)
         run: |
           dotnet sonarscanner end \
-            /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
-            /d:sonar.cs.opencover.reportsPaths="TestResults/coverage-report/SonarQube.xml"
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-      - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v4
+      - name: Upload coverage to SonarCloud
+        uses: SonarSource/sonarcloud-github-action@v2
         with:
-          name: coverage-artifacts
+          projectBaseDir: .
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: "https://sonarcloud.io"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
           path: |
-            TestResults/coverage-report/**
-            TestResults/*/coverage.cobertura.xml
-          retention-days: 7
+            coverage-report/**
+            TestResults/**/coverage.cobertura.xml
