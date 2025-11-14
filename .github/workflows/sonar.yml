@@ -1,4 +1,4 @@
-name: SonarCloud Analysis
+name: Build & Sonar
 
 on:
   push:
@@ -8,66 +8,48 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-analyze:
+  build:
     runs-on: ubuntu-latest
-    env:
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '8.0.x'
 
-      - name: Install tools
-        run: |
-          dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.1.26
-          dotnet tool install --global dotnet-sonarscanner --version 5.13.0
-          echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
-
-      - name: SonarScanner begin
+      # -------------------------------
+      # SONAR MSBUILD SCAN (REQUIRED)
+      # -------------------------------
+      - name: SonarScanner Begin
         run: |
           dotnet sonarscanner begin \
+            /k:"${{ vars.SONAR_PROJECT_KEY }}" \
+            /o:"${{ vars.SONAR_ORGANIZATION }}" \
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io"
 
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore src
 
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build src --no-restore
 
-      - name: Run tests with coverage
-        run: |
-          dotnet test Tests/OrderFlow.UnitTests \
-            --collect:"XPlat Code Coverage" \
-            --results-directory TestResults
+      - name: Test with coverage
+        run: dotnet test Tests --collect:"XPlat Code Coverage" --no-build
 
-          dotnet test Tests/OrderFlow.IntegrationTests \
-            --collect:"XPlat Code Coverage" \
-            --results-directory TestResults
-
-      - name: Generate OpenCover report
-        run: |
-          reportgenerator \
-            -reports:TestResults/**/coverage.cobertura.xml \
-            -targetdir:coverage-report \
-            -reporttypes:opencover
-
-      - name: SonarScanner end
+      - name: SonarScanner End
         run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-      - name: Upload coverage artifacts
-        uses: actions/upload-artifact@v4
+      # --------------------------------
+      # SONARCLOUD ACTION (READS sonar-project.properties)
+      # --------------------------------
+      - name: Publish analysis to SonarCloud
+        uses: SonarSource/sonarcloud-github-action@v2
         with:
-          name: coverage
-          path: |
-            coverage-report/**
-            TestResults/**/coverage.cobertura.xml
-          retention-days: 7
+          projectBaseDir: .
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
