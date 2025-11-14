@@ -7,10 +7,12 @@ on:
     branches: [ main, develop ]
 
 jobs:
-  sonar:
+  sonarcloud:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
@@ -19,16 +21,30 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
+      - name: Restore
+        run: dotnet restore
+
       - name: Build
         run: dotnet build --no-incremental
 
-      - name: Run SonarCloud scan
-        uses: SonarSource/sonarcloud-github-action@master
+      - name: Run tests with coverage
+        run: |
+          dotnet test tests/OrderFlow.UnitTests \
+            --collect:"XPlat Code Coverage" \
+            --results-directory tests/OrderFlow.UnitTests/TestResults
+
+      - name: Convert coverage to Cobertura
+        run: |
+          report=$(find tests/OrderFlow.UnitTests/TestResults -name "coverage.cobertura.xml" -type f | head -n 1)
+          echo "REPORT_PATH=$report" >> $GITHUB_ENV
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         with:
           args: >
             -Dsonar.projectKey=KSIECIUNI0_orderflow-backend
             -Dsonar.organization=ksieciuni0
             -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.coverageReportPaths=tests/OrderFlow.UnitTests/TestResults/**/coverage.cobertura.xml
+            -Dsonar.cs.opencover.reportsPaths=${{ env.REPORT_PATH }}
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
