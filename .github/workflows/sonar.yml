@@ -39,7 +39,7 @@ jobs:
           echo "REPORT_PATH=$report" >> $GITHUB_ENV
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5.0.0
+        uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d
         with:
           args: >
             -Dsonar.projectKey=KSIECIUNI0_orderflow-backend
