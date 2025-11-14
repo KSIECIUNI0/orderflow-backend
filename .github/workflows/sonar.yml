@@ -1,11 +1,11 @@
 name: SonarCloud Analysis
 
 on:
-  workflow_dispatch:
   push:
     branches: [develop, main]
   pull_request:
     branches: [develop, main]
+  workflow_dispatch:
 
 jobs:
   build-and-analyze:
@@ -15,65 +15,59 @@ jobs:
       DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-dotnet@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
       - name: Install tools
         run: |
           dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.1.26
-          echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
-
-      - name: Begin SonarScanner
-        run: |
           dotnet tool install --global dotnet-sonarscanner --version 5.13.0
           echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: SonarScanner begin
+        run: |
           dotnet sonarscanner begin \
-            /k:"KSIECIUNI0_orderflow-backend" \
-            /o:"ksieciuni0" \
-            /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="https://sonarcloud.io"
 
       - name: Restore
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --no-incremental
+        run: dotnet build --no-restore
 
-      - name: Test with coverage
+      - name: Run tests with coverage
         run: |
-          dotnet test \
+          dotnet test Tests/OrderFlow.UnitTests \
             --collect:"XPlat Code Coverage" \
             --results-directory TestResults
 
-      - name: Generate SonarQube XML
+          dotnet test Tests/OrderFlow.IntegrationTests \
+            --collect:"XPlat Code Coverage" \
+            --results-directory TestResults
+
+      - name: Generate OpenCover report
         run: |
           reportgenerator \
-            -reports:TestResults/*/coverage.cobertura.xml \
+            -reports:TestResults/**/coverage.cobertura.xml \
             -targetdir:coverage-report \
-            -reporttypes:SonarQube
+            -reporttypes:opencover
 
-      - name: End SonarScanner (NO coverage here!)
-        run: |
-          dotnet sonarscanner end \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+      - name: SonarScanner end
+        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-      - name: Upload coverage to SonarCloud
-        uses: SonarSource/sonarcloud-github-action@v2
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
         with:
-          projectBaseDir: .
-          args: >
-            -Dsonar.projectKey=KSIECIUNI0_orderflow-backend
-            -Dsonar.organization=ksieciuni0
-            -Dsonar.host.url=https://sonarcloud.io
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      
-      - uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
+          name: coverage
           path: |
             coverage-report/**
             TestResults/**/coverage.cobertura.xml
+          retention-days: 7
