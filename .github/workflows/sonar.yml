@@ -64,12 +64,13 @@ jobs:
         uses: SonarSource/sonarcloud-github-action@v2
         with:
           projectBaseDir: .
+          args: >
+            -Dsonar.projectKey=KSIECIUNI0_orderflow-backend
+            -Dsonar.organization=ksieciuni0
+            -Dsonar.host.url=https://sonarcloud.io
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: "https://sonarcloud.io"
-          SONAR_PROJECTKEY: "KSIECIUNI0_orderflow-backend"
-          SONAR_ORGANIZATION: "ksieciuni0"
-
+      
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
