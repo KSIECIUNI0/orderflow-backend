@@ -36,18 +36,18 @@ jobs:
             /k:"KSIECIUNI0_orderflow-backend" \
             /o:"ksieciuni0" \
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
+            /d:sonar.host.url="https://sonarcloud.io" \
             /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage-report/coverage.opencover.xml"
 
       - name: Restore dependencies
         run: dotnet restore
 
       - name: Build solution
-        run: dotnet build --no-incremental
+        run: dotnet build
 
       - name: Run tests with coverage
         run: |
           dotnet test \
-            --no-build \
             --collect:"XPlat Code Coverage" \
             --results-directory ./TestResults
 
