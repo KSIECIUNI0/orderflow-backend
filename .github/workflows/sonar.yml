@@ -33,10 +33,16 @@ jobs:
             --collect:"XPlat Code Coverage" \
             --results-directory tests/OrderFlow.UnitTests/TestResults
           
-      - name: Find Cobertura coverage file
+      - name: Install ReportGenerator
+        run: dotnet tool install -g dotnet-reportgenerator-globaltool
+          
+      - name: Convert coverage to SonarCloud format
         run: |
-          report=$(find tests/OrderFlow.UnitTests/TestResults -name "coverage.cobertura.xml" -type f | head -n 1)
-          echo "COVERAGE_PATH=$report" >> $GITHUB_ENV
+          reportgenerator \
+            -reports:"tests/OrderFlow.UnitTests/TestResults/**/coverage.cobertura.xml" \
+            -targetdir:"tests/OrderFlow.UnitTests/TestResults/coverage-report" \
+            -reporttypes:SonarQube
+          echo "COVERAGE_PATH=tests/OrderFlow.UnitTests/TestResults/coverage-report/SonarQube.xml" >> $GITHUB_ENV
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d
