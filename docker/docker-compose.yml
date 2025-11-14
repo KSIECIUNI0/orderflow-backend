@@ -5,11 +5,17 @@ services:
       - "4566:4566"
     environment:
       - SERVICES=s3, sqs
-      - DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID='test'
+      - AWS_SECRET_KEY='test'
+      - AWS_SECRET_ACCESS_KEY='test'
       - DEBUG=1
+      - LS_LOG=trace
+      - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
       - "./localstack:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./localstack-init:/etc/localstack/init/ready.d"
         
   postgres:
     image: postgres:16
