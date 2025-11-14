@@ -45,7 +45,7 @@ jobs:
           echo "COVERAGE_PATH=tests/OrderFlow.UnitTests/TestResults/coverage-report/SonarQube.xml" >> $GITHUB_ENV
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d
+        uses: SonarSource/sonarqube-scan-action@v3
         with:
           args: >
             -Dsonar.projectKey=KSIECIUNI0_orderflow-backend
