@@ -32,7 +32,14 @@ public class Order
         int quantity)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(productName);
+        // Justification: Explicitly passing the parameter name is intentional here.
+        // The built-in ThrowIfGreaterThan API does not use CallerArgumentExpression,
+        // and relying on its automatic caller info would produce misleading values
+        // such as "productName.Length". Supplying nameof(productName) ensures the
+        // exception message contains the correct parameter name.
+        #pragma warning disable S3236
         ArgumentOutOfRangeException.ThrowIfGreaterThan(productName.Length, 100, nameof(productName));
+        #pragma warning restore S3236
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(quantity);
     }
 }
