@@ -28,14 +28,11 @@ jobs:
         run: dotnet build --no-incremental
 
       - name: Run tests with coverage
-        run: |
-          dotnet test tests/OrderFlow.UnitTests \
-            --collect:"XPlat Code Coverage" \
-            --results-directory tests/OrderFlow.UnitTests/TestResults
+        run: dotnet test tests/OrderFlow.UnitTests /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
 
-      - name: Convert coverage to Cobertura
+      - name: Set coverage path
         run: |
-          report=$(find tests/OrderFlow.UnitTests/TestResults -name "coverage.cobertura.xml" -type f | head -n 1)
+          report=$(find tests/OrderFlow.UnitTests/TestResults -name "coverage.opencover.xml" -type f | head -n 1)
           echo "REPORT_PATH=$report" >> $GITHUB_ENV
 
       - name: SonarCloud Scan
@@ -45,8 +42,9 @@ jobs:
             -Dsonar.projectKey=KSIECIUNI0_orderflow-backend
             -Dsonar.organization=ksieciuni0
             -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.sources=.
+            -Dsonar.tests=tests/OrderFlow.UnitTests
+            -Dsonar.test.inclusions=**/*.cs
             -Dsonar.cs.opencover.reportsPaths=${{ env.REPORT_PATH }}
-            -Dsonar.tests="tests/OrderFlow.UnitTests/OrderFlow.UnitTests.csproj"
-            -Dsonar.test.inclusions="**/*.cs"
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
