@@ -37,7 +37,7 @@ jobs:
             /o:"ksieciuni0" \
             /d:sonar.login="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.cs.opencover.reportsPaths="**/TestResults/coverage-report/coverage.opencover.xml"
+            /d:sonar.cs.opencover.reportsPaths="./TestResults/coverage-report/SonarQube.xml"
 
       - name: Restore dependencies
         run: dotnet restore
@@ -56,7 +56,7 @@ jobs:
           reportgenerator \
             -reports:TestResults/*/coverage.cobertura.xml \
             -targetdir:TestResults/coverage-report \
-            -reporttypes:opencover
+            -reporttypes:SonarQube
 
       - name: End SonarScanner
         run: dotnet sonarscanner end /d:sonar.login="${{ secrets.SONAR_TOKEN }}"
