@@ -40,10 +40,6 @@ jobs:
             /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
             /d:sonar.sources="src" \
             /d:sonar.tests="tests" \
-            /d:sonar.inclusions="**/*.cs" \
-            /d:sonar.exclusions="**/bin/**,**/obj/**" \
-            /d:sonar.test.exclusions="**/bin/**,**/obj/**" \
-            /d:sonar.coverage.exclusions="**/Migrations/**" \
             /d:sonar.cs.opencover.reportsPaths="coverage-report/SonarQube.xml"
 
       - name: Restore
