@@ -30,7 +30,7 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Test with coverage
-        run: dotnet test \
+        run: dotnet test OrderFlow.sln \
           --collect:"XPlat Code Coverage" \
           --results-directory TestResults \
           --configuration Release
@@ -44,11 +44,11 @@ jobs:
           -targetdir:TestResults/report \
           -reporttypes:SonarQube;Html
 
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report-html
-          path: TestResults/report/index.html
+      #- name: Upload coverage report
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: coverage-report-html
+      #    path: TestResults/report/index.html
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6.0.0
