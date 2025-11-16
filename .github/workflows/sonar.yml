@@ -63,4 +63,5 @@ jobs:
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
             -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.cs.roslyn.reportPaths=TestResults/report/SonarQube.xml
+            -Dsonar.cs.opencover.reportsPaths=TestResults/report/SonarQube.xml
+            -Dsonar.exclusions=**/.github/**,**/Dockerfile
