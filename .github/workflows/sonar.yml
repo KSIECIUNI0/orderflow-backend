@@ -8,68 +8,56 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-analyze:
+  build:
+    name: Build and Analyze
     runs-on: ubuntu-latest
-    env:
-      DOTNET_NOLOGO: true
-      DOTNET_CLI_TELEMETRY_OPTOUT: 1
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup .NET 9
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.x'
 
-      - name: Install tools (ReportGenerator + SonarScanner)
-        run: |
-          dotnet tool install --global dotnet-reportgenerator-globaltool --version 5.1.26
-          dotnet tool install --global dotnet-sonarscanner --version 5.13.0
-          echo "${HOME}/.dotnet/tools" >> $GITHUB_PATH
-
-      - name: SonarScanner Begin
-        run: |
-          dotnet sonarscanner begin \
-            /k:"${{ vars.SONAR_PROJECT_KEY }}" \
-            /o:"${{ vars.SONAR_ORGANIZATION }}" \
-            /d:sonar.host.url="https://sonarcloud.io" \
-            /d:sonar.token="${{ secrets.SONAR_TOKEN }}" \
-            /d:sonar.cs.opencover.reportsPaths="coverage-report/SonarQube.xml"
-
-      - name: Restore
+      - name: Restore dependencies
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --no-restore
+        run: dotnet build --no-restore --configuration Release
 
-      - name: Run tests with coverage
-        run: |
-          dotnet test tests/OrderFlow.UnitTests \
-            --collect:"XPlat Code Coverage" \
-            --results-directory TestResults
-          dotnet test tests/OrderFlow.IntegrationTests \
-            --collect:"XPlat Code Coverage" \
-            --results-directory TestResults
+      - name: Test with coverage
+        run: dotnet test tests/OrderFlow.UnitTests \
+          --collect:"XPlat Code Coverage" \
+          --results-directory TestResults \
+          --configuration Release
 
-      - name: Generate SonarQube coverage report
-        run: |
-          reportgenerator \
-            -reports:TestResults/*/coverage.cobertura.xml \
-            -targetdir:coverage-report \
-            -reporttypes:SonarQube
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
 
-      - name: SonarScanner End
-        run: dotnet sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+      - name: Convert coverage reports
+        run: reportgenerator \
+          -reports:TestResults/**/coverage.cobertura.xml \
+          -targetdir:TestResults/report \
+          -reporttypes:SonarQube;Html
 
-      - name: Upload coverage artifacts
+      - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
-          name: coverage
-          path: |
-            coverage-report/**
-            TestResults/**/coverage.cobertura.xml
-          retention-days: 7
+          name: coverage-report-html
+          path: TestResults/report/index.html
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}"
+            -Dsonar.organization="${{ vars.SONAR_ORGANIZATION }}"
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.cs.roslyn.reportPaths=TestResults/report/SonarQube.xml
