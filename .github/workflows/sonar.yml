@@ -45,7 +45,7 @@ jobs:
         run: reportgenerator \
           -reports:TestResults/**/coverage.cobertura.xml \
           -targetdir:TestResults/report \
-          -reporttypes:SonarQube;Html
+          -reporttypes:SonarQube
 
       #- name: Upload coverage report
       #  uses: actions/upload-artifact@v4
