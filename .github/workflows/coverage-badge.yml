@@ -1,10 +1,11 @@
 name: Generate Coverage Badge
 
 on:
-  workflow_run:
-    workflows: ["Build & Test & Docker"]
-    types:
-      - completed
+  #workflow_run:
+  #  workflows: ["Build & Test & Docker"]
+  #  types:
+  #    - completed
+  workflow_dispatch:
 
 permissions:
   actions: read
