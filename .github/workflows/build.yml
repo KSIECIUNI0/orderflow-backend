@@ -32,50 +32,7 @@ jobs:
         run: dotnet build --configuration Release --no-restore
         
       - name: Run Tests (Unit + Integration)
-        run: dotnet test --no-build --configuration Release --logger "trx;LogFileName=test_results.trx" --collect:"XPlat Code Coverage"
-
-      #- name: Upload Test Results (TRX)
-      #  uses: actions/upload-artifact@v4
-      #  with:
-      #    name: test-results
-      #    path: "**/*.trx"
-      #    retention-days: 1
-        
-      - name: Install ReportGenerator
-        run: dotnet tool install -g dotnet-reportgenerator-globaltool
-        
-      - name: Generate code coverage report
-        run: |
-          reportgenerator \
-            -reports:"tests/OrderFlow.UnitTests/TestResults/**/*.xml" \
-            -targetdir:"coverage-report-html" \
-            -reporttypes:Html
-
-      #- name: Upload coverage report artifact
-      #  uses: actions/upload-artifact@v4
-      #  with:
-      #    name: coverage-report
-      #    path: coverage-report-html
-      #    retention-days: 1
-        
-      - name: Generate text summary of coverage report
-        run: reportgenerator -reports:"tests/OrderFlow.UnitTests/TestResults/**/*.xml" -targetdir:coverage-report-text -reporttypes:TextSummary
-        
-      #- name: Upload text coverage summary
-      #  uses: actions/upload-artifact@v4
-      #  with:
-      #    name: coverage-report-text
-      #    path: coverage-report-text
-      #    retention-days: 1
-        
-      - name: Enforce coverage threshold
-        run: |
-          COVERAGE=$(grep -oP 'Line coverage: \K[0-9]+' coverage-report-text/Summary.txt)
-          echo "Coverage is $COVERAGE%"
-          if [ $COVERAGE -lt 80 ]; then
-            echo "❌ Coverage below 80%!"
-            exit 1
-          fi
+        run: dotnet test --no-build --configuration Release
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

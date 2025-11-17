@@ -1,7 +1,6 @@
 # OrderFlow 🧾
 
 ![Build Status](https://github.com/KSIECIUNI0/orderflow-backend/actions/workflows/build.yml/badge.svg)
-![Coverage](./coverage-badge.svg)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=KSIECIUNI0_orderflow-backend&metric=alert_status&token=ec5dcf4c42c3d67e7cae0b396f858eec5cba36a1)](https://sonarcloud.io/summary/new_code?id=KSIECIUNI0_orderflow-backend)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=KSIECIUNI0_orderflow-backend&metric=coverage&token=ec5dcf4c42c3d67e7cae0b396f858eec5cba36a1)](https://sonarcloud.io/summary/new_code?id=KSIECIUNI0_orderflow-backend)
 [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=KSIECIUNI0_orderflow-backend&metric=bugs&token=ec5dcf4c42c3d67e7cae0b396f858eec5cba36a1)](https://sonarcloud.io/summary/new_code?id=KSIECIUNI0_orderflow-backend)
