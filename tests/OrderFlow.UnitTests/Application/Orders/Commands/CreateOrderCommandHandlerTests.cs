@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Moq;
+using OrderFlow.Application.Common.EventBus;
 using OrderFlow.Application.Orders;
 using OrderFlow.Application.Orders.Commands;
 using OrderFlow.Domain.Abstractions;
@@ -11,6 +12,7 @@ public class CreateOrderCommandHandlerTests
 {
     private readonly Mock<IOrderRepository> _orderRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
+    private readonly Mock<IEventBus> _eventBusMock = new();
 
     [Fact]
     public async Task Handle_ShouldReturnOrderResponse_WhenPassProductNameAndQuantity()
@@ -60,5 +62,7 @@ public class CreateOrderCommandHandlerTests
     }
     
     private CreateOrderCommandHandler Sut() =>
-        new (_orderRepositoryMock.Object, _unitOfWorkMock.Object);
+        new (_orderRepositoryMock.Object,
+            _unitOfWorkMock.Object,
+            _eventBusMock.Object);
 }

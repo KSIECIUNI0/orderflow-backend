@@ -1,11 +1,14 @@
+using Amazon.SQS;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using OrderFlow.Api.Middleware;
+using OrderFlow.Application.Common.EventBus;
 using OrderFlow.Application.Orders;
 using OrderFlow.Application.Orders.Commands;
 using OrderFlow.Application.Orders.Validators;
 using OrderFlow.Domain.Abstractions;
 using OrderFlow.Infrastructure;
+using OrderFlow.Infrastructure.EventBus;
 using OrderFlow.Infrastructure.Orders;
 using OrderFlow.Infrastructure.Persistence;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
@@ -28,6 +31,17 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
+
+builder.Services.AddSingleton<IAmazonSQS>(_ =>
+{
+    var config = new AmazonSQSConfig
+    {
+        ServiceURL = builder.Configuration.GetSection("AWS:ServiceURL").Value,
+        UseHttp = true
+    };
+    return new AmazonSQSClient(config);
+});
+builder.Services.AddSingleton<IEventBus, SqsEventBus>();
 
 builder.Services.AddControllers();
 
