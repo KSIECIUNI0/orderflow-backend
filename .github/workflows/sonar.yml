@@ -45,7 +45,7 @@ jobs:
         run: reportgenerator \
           -reports:TestResults/**/coverage.cobertura.xml \
           -targetdir:TestResults/report \
-          -reporttypes:SonarQube
+          -reporttypes:SonarQube \
           -sourcedirs:src
 
       #- name: Upload coverage report
