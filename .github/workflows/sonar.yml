@@ -52,6 +52,7 @@ jobs:
         with:
           name: coverage-report-xml
           path: TestResults/report/SonarQube.xml
+          retention-days: 1
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v6.0.0

@@ -39,6 +39,7 @@ jobs:
       #  with:
       #    name: test-results
       #    path: "**/*.trx"
+      #    retention-days: 1
         
       - name: Install ReportGenerator
         run: dotnet tool install -g dotnet-reportgenerator-globaltool
@@ -55,6 +56,7 @@ jobs:
       #  with:
       #    name: coverage-report
       #    path: coverage-report-html
+      #    retention-days: 1
         
       - name: Generate text summary of coverage report
         run: reportgenerator -reports:"tests/OrderFlow.UnitTests/TestResults/**/*.xml" -targetdir:coverage-report-text -reporttypes:TextSummary
@@ -64,6 +66,7 @@ jobs:
       #  with:
       #    name: coverage-report-text
       #    path: coverage-report-text
+      #    retention-days: 1
         
       - name: Enforce coverage threshold
         run: |
@@ -90,3 +93,4 @@ jobs:
       #  with: 
       #    name: orderflow-api-image
       #    path: orderflow-api-ci.tar.gz
+      #    retention-days: 1
