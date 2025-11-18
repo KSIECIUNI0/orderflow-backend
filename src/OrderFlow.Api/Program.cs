@@ -1,3 +1,4 @@
+using Amazon.Runtime;
 using Amazon.SQS;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -34,12 +35,17 @@ builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 
 builder.Services.AddSingleton<IAmazonSQS>(_ =>
 {
+    var awsConfig = builder.Configuration.GetSection("AWS");
+    var serviceUrl = awsConfig.GetValue<string>("ServiceUrl");
+    var accessKey = awsConfig.GetValue<string>("AccessKey");
+    var secretKey = awsConfig.GetValue<string>("SecretKey");
+    
     var config = new AmazonSQSConfig
     {
-        ServiceURL = builder.Configuration.GetSection("AWS:ServiceURL").Value,
+        ServiceURL = serviceUrl,
         UseHttp = true
     };
-    return new AmazonSQSClient(config);
+    return new AmazonSQSClient(new BasicAWSCredentials(accessKey, secretKey), config);
 });
 builder.Services.AddSingleton<IEventBus, SqsEventBus>();
 
