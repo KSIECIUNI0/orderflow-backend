@@ -7,15 +7,19 @@ using OrderFlow.IntegrationTests.Helpers;
 
 namespace OrderFlow.IntegrationTests.Controllers;
 
-[Collection("Database collection")]
+[Collection("Integration tests collection")]
 public class OrdersControllerTests : IAsyncLifetime
 {
     private readonly HttpClient _client;
     private readonly OrderDataHelper _orderDataHelper;
 
-    public OrdersControllerTests(PostgreSqlContainerFixture fixture)
+    public OrdersControllerTests(
+        PostgreSqlContainerFixture dbFixture,
+        LocalStackContainerFixture awsFixture)
     {
-        var factory = new OrderFlowApiFactory(fixture.ConnectionString);
+        var factory = new OrderFlowApiFactory(
+            dbFixture.ConnectionString,
+            awsFixture.SqsUrl);
         _client = factory.CreateClient();
         _orderDataHelper = factory.OrderDataHelper;
     }

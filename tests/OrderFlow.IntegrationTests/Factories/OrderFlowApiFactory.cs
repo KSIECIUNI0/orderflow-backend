@@ -1,3 +1,5 @@
+using Amazon.Runtime;
+using Amazon.SQS;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -10,11 +12,15 @@ namespace OrderFlow.IntegrationTests.Factories;
 
 public class OrderFlowApiFactory : WebApplicationFactory<Program>
 {
-    private readonly string _connectionString;
+    private readonly string _dbConnectionString;
+    private readonly string _sqsUrl;
 
-    public OrderFlowApiFactory(string connectionString)
+    public OrderFlowApiFactory(
+        string dbConnectionString,
+        string sqsUrl)
     {
-        _connectionString = connectionString;
+        _dbConnectionString = dbConnectionString;
+        _sqsUrl = sqsUrl;
     }
 
     public OrderDataHelper OrderDataHelper => new(Services);
@@ -26,7 +32,20 @@ public class OrderFlowApiFactory : WebApplicationFactory<Program>
             services.RemoveAll(typeof(DbContextOptions<OrderFlowDbContext>));
             services.AddDbContext<OrderFlowDbContext>(options =>
             {
-                options.UseNpgsql(_connectionString);
+                options.UseNpgsql(_dbConnectionString);
+            });
+
+            services.RemoveAll(typeof(IAmazonSQS));
+            services.AddSingleton<IAmazonSQS>(_ =>
+            {
+                var config = new AmazonSQSConfig
+                {
+                    ServiceURL = _sqsUrl,
+                    UseHttp = true
+                };
+                return new AmazonSQSClient(
+                    new BasicAWSCredentials("test", "test"),
+                    config);
             });
             
             var sp = services.BuildServiceProvider();
