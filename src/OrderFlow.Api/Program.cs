@@ -37,15 +37,18 @@ builder.Services.AddSingleton<IAmazonSQS>(_ =>
 {
     var awsConfig = builder.Configuration.GetSection("AWS");
     var serviceUrl = awsConfig.GetValue<string>("ServiceUrl");
+    var region =  awsConfig.GetValue<string>("Region");
     var accessKey = awsConfig.GetValue<string>("AccessKey");
     var secretKey = awsConfig.GetValue<string>("SecretKey");
-    
-    var config = new AmazonSQSConfig
-    {
-        ServiceURL = serviceUrl,
-        UseHttp = true
-    };
-    return new AmazonSQSClient(new BasicAWSCredentials(accessKey, secretKey), config);
+
+    return new AmazonSQSClient(
+        new BasicAWSCredentials(accessKey, secretKey),
+        new AmazonSQSConfig
+        {
+            ServiceURL = serviceUrl,
+            AuthenticationRegion = region,
+            UseHttp = true
+        });
 });
 builder.Services.AddSingleton<IEventBus, SqsEventBus>();
 
