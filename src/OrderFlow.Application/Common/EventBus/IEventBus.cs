@@ -1,7 +1,8 @@
+using OrderFlow.Application.Orders.Events;
+
 namespace OrderFlow.Application.Common.EventBus;
 
 public interface IEventBus
 {
-    Task PublishAsync<T>(T @event, CancellationToken cancellationToken = default)
-        where T : class;
+    Task PublishOrderCreatedAsync(OrderCreatedEvent @event, CancellationToken cancellationToken = default);
 }

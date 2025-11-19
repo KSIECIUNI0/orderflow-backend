@@ -30,7 +30,7 @@ public class CreateOrderCommandHandler : IRequestHandler<CreateOrderCommand, Ord
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var @event = new OrderCreatedEvent(saved.Id, saved.ProductName, saved.Quantity);
-        await _eventBus.PublishAsync(@event, cancellationToken);
+        await _eventBus.PublishOrderCreatedAsync(@event, cancellationToken);
         
         return new OrderResponse(saved.Id, saved.ProductName, saved.Quantity);
     }
