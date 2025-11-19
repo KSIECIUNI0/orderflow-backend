@@ -15,7 +15,7 @@ public class SqsEventBus : IEventBus
     {
         _sqs = sqs;
         
-        _queueUrl = config["Sqs:OrderCreatedQueue"] 
+        _queueUrl = config["Sqs:OrderCreatedQueueUrl"] 
                     ?? throw new ArgumentNullException(paramName: nameof(config), message: "Sqs:QueueUrl not configured");
     }
 

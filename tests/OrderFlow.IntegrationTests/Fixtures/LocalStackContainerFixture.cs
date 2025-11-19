@@ -31,7 +31,7 @@ public class LocalStackContainerFixture : IAsyncLifetime
                 UseHttp = true
             });
 
-        await sqsClient.CreateQueueAsync("OrderCreatedQueue");
+        await sqsClient.CreateQueueAsync("order-created-queue");
     }
 
     public async Task DisposeAsync()
