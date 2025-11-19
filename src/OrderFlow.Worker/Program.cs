@@ -1,14 +1,21 @@
 using Amazon.Runtime;
 using Amazon.SQS;
-using OrderFlow.Worker;
+using OrderFlow.Application.Orders.Events;
+using OrderFlow.Worker.Orders.Handlers;
+using OrderFlow.Worker.Orders.Workers;
 
 var builder = Host.CreateApplicationBuilder(args);
+
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(OrderCreatedEvent).Assembly);
+    cfg.RegisterServicesFromAssembly(typeof(OrderCreatedSqsHandler).Assembly);
+});
 
 builder.Services.AddSingleton<IAmazonSQS>(_ =>
 {
     var awsConfig = builder.Configuration.GetSection("AWS");
     var serviceUrl = awsConfig.GetValue<string>("ServiceUrl");
-    var region =  awsConfig.GetValue<string>("Region");
     var accessKey = awsConfig.GetValue<string>("AccessKey");
     var secretKey = awsConfig.GetValue<string>("SecretKey");
 
@@ -17,12 +24,11 @@ builder.Services.AddSingleton<IAmazonSQS>(_ =>
         new AmazonSQSConfig
         {
             ServiceURL = serviceUrl,
-            AuthenticationRegion = region,
             UseHttp = true
         });
 });
 
-builder.Services.AddHostedService<Worker>();
+builder.Services.AddHostedService<OrderCreatedWorker>();
 
 var host = builder.Build();
 await host.RunAsync();

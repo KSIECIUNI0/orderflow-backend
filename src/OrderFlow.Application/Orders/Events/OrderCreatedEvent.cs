@@ -1,3 +1,5 @@
+using MediatR;
+
 namespace OrderFlow.Application.Orders.Events;
 
-public record OrderCreatedEvent(Guid OrderId, string ProductName, int Quantity);
+public record OrderCreatedEvent(Guid OrderId, string ProductName, int Quantity) : INotification;

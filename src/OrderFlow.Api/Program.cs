@@ -31,13 +31,11 @@ builder.Services.AddFluentValidationAutoValidation(options =>
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
-builder.Services.AddTransient<ExceptionHandlingMiddleware>();
-
+builder.Services.AddSingleton<IEventBus, SqsEventBus>();
 builder.Services.AddSingleton<IAmazonSQS>(_ =>
 {
     var awsConfig = builder.Configuration.GetSection("AWS");
     var serviceUrl = awsConfig.GetValue<string>("ServiceUrl");
-    var region =  awsConfig.GetValue<string>("Region");
     var accessKey = awsConfig.GetValue<string>("AccessKey");
     var secretKey = awsConfig.GetValue<string>("SecretKey");
 
@@ -46,12 +44,11 @@ builder.Services.AddSingleton<IAmazonSQS>(_ =>
         new AmazonSQSConfig
         {
             ServiceURL = serviceUrl,
-            AuthenticationRegion = region,
             UseHttp = true
         });
 });
-builder.Services.AddSingleton<IEventBus, SqsEventBus>();
 
+builder.Services.AddTransient<ExceptionHandlingMiddleware>();
 builder.Services.AddControllers();
 
 var app = builder.Build();

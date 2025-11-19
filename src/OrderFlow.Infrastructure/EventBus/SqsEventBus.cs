@@ -17,7 +17,7 @@ public class SqsEventBus : IEventBus
         _sqs = sqs;
         
         _orderCreatedQueueUrl = config["Sqs:OrderCreatedQueueUrl"] 
-                    ?? throw new ArgumentNullException(paramName: nameof(config), message: "Sqs:QueueUrl not configured");
+                    ?? throw new ArgumentNullException(paramName: nameof(config), message: "Sqs:OrderCreatedQueueUrl not configured");
     }
 
     public async Task PublishOrderCreatedAsync(OrderCreatedEvent @event, CancellationToken cancellationToken = default)
