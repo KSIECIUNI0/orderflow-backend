@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Testing;
 using Moq;
 using OrderFlow.Application.Common.EventBus;
 using OrderFlow.Application.Orders;
@@ -13,6 +14,7 @@ public class CreateOrderCommandHandlerTests
     private readonly Mock<IOrderRepository> _orderRepositoryMock = new();
     private readonly Mock<IUnitOfWork> _unitOfWorkMock = new();
     private readonly Mock<IEventBus> _eventBusMock = new();
+    private readonly FakeLogger<CreateOrderCommandHandler> _fakeLogger = new();
 
     [Fact]
     public async Task Handle_ShouldReturnOrderResponse_WhenPassProductNameAndQuantity()
@@ -64,5 +66,6 @@ public class CreateOrderCommandHandlerTests
     private CreateOrderCommandHandler Sut() =>
         new (_orderRepositoryMock.Object,
             _unitOfWorkMock.Object,
-            _eventBusMock.Object);
+            _eventBusMock.Object,
+            _fakeLogger);
 }

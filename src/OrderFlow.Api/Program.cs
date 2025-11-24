@@ -1,9 +1,13 @@
 using Amazon.Runtime;
 using Amazon.SQS;
 using FluentValidation;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using OrderFlow.Api.Infrastructure;
 using OrderFlow.Api.Middleware;
+using OrderFlow.Application.Common.Behaviors;
 using OrderFlow.Application.Common.EventBus;
+using OrderFlow.Application.Common.Interfaces;
 using OrderFlow.Application.Orders;
 using OrderFlow.Application.Orders.Commands;
 using OrderFlow.Application.Orders.Validators;
@@ -12,10 +16,25 @@ using OrderFlow.Infrastructure;
 using OrderFlow.Infrastructure.EventBus;
 using OrderFlow.Infrastructure.Orders;
 using OrderFlow.Infrastructure.Persistence;
+using Serilog;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var config = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
+
+var logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(config)
+    .Enrich.FromLogContext()
+    .CreateLogger();
+
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
+
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<OrderFlowDbContext>(options =>
 {
@@ -31,6 +50,7 @@ builder.Services.AddFluentValidationAutoValidation(options =>
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+builder.Services.AddSingleton<ICorrelationIdAccessor, HttpCorrelationIdAccessor>();
 builder.Services.AddSingleton<IEventBus, SqsEventBus>();
 builder.Services.AddSingleton<IAmazonSQS>(_ =>
 {
@@ -49,6 +69,7 @@ builder.Services.AddSingleton<IAmazonSQS>(_ =>
 });
 
 builder.Services.AddTransient<ExceptionHandlingMiddleware>();
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(CorrelationIdBehavior<,>));
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -60,6 +81,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.MapControllers();
 
 await app.RunAsync();

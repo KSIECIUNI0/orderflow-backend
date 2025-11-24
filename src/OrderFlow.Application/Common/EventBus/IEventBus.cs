@@ -4,5 +4,5 @@ namespace OrderFlow.Application.Common.EventBus;
 
 public interface IEventBus
 {
-    Task PublishOrderCreatedAsync(OrderCreatedEvent @event, CancellationToken cancellationToken = default);
+    Task PublishOrderCreatedAsync(OrderCreatedEvent @event, string? correlationId, CancellationToken cancellationToken = default);
 }
