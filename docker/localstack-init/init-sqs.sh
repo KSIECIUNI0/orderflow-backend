@@ -12,7 +12,7 @@ DLQ_ARN=$(aws --endpoint-url=http://localhost:4566 sqs get-queue-attributes \
   --attribute-names QueueArn \
   --query "Attributes.QueueArn" \
   --output text)
-echo "Get queue ARN: $DLQ_ARN"
+echo "Get dlq queue ARN: $DLQ_ARN"
 
 aws --endpoint-url=http://localhost:4566 sqs create-queue \
   --queue-name order-created-queue \

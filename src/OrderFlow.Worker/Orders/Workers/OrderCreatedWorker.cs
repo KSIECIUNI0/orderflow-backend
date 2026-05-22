@@ -77,7 +77,7 @@ public class OrderCreatedWorker : BackgroundService
                 ArgumentNullException.ThrowIfNull(@event);
 
                 _logger.LogInformation("OrderCreatedEvent received for {OrderId}", @event.OrderId);
-
+                
                 var scope = _serviceProvider.CreateScope();
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
                 await mediator.Publish(@event, stoppingToken);
