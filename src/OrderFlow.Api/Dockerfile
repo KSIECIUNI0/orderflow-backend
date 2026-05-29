@@ -2,6 +2,7 @@
 WORKDIR /app
 
 COPY *.sln .
+COPY src/OrderFlow.AlertService/*.csproj src/OrderFlow.AlertService/
 COPY src/OrderFlow.Api/*.csproj src/OrderFlow.Api/
 COPY src/OrderFlow.Application/*.csproj src/OrderFlow.Application/
 COPY src/OrderFlow.Domain/*.csproj src/OrderFlow.Domain/
