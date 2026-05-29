@@ -1,0 +1,14 @@
+{
+  "Rules": [
+    {
+      "ID": "DeleteFailedMessagesAfter30Days",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": ""
+      },
+      "Expiration": {
+        "Days": 30
+      }
+    }
+  ]
+}
