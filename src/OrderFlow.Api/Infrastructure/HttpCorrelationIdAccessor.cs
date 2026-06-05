@@ -1,22 +1,16 @@
-using OrderFlow.Application.Common.Interfaces;
+using OrderFlow.Application.Correlation;
 
 namespace OrderFlow.Api.Infrastructure;
 
-public class HttpCorrelationIdAccessor : ICorrelationIdAccessor
+public class HttpCorrelationIdAccessor(IHttpContextAccessor httpContextAccessor) : ICorrelationIdAccessor
 {
     private const string HeaderName = "X-Correlation-Id";
-    private readonly IHttpContextAccessor _httpContextAccessor;
-
-    public HttpCorrelationIdAccessor(IHttpContextAccessor httpContextAccessor)
-    {
-        _httpContextAccessor = httpContextAccessor;
-    }
 
     public string? CorrelationId
     {
         get
         {
-            var ctx = _httpContextAccessor.HttpContext;
+            var ctx = httpContextAccessor.HttpContext;
             if (ctx is null) 
                 return null;
             
@@ -27,7 +21,7 @@ public class HttpCorrelationIdAccessor : ICorrelationIdAccessor
     }
     public void Set(string correlationId)
     {
-        var ctx = _httpContextAccessor.HttpContext;
+        var ctx = httpContextAccessor.HttpContext;
         if (ctx is null) 
             return;
         

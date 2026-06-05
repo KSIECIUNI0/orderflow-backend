@@ -1,4 +1,4 @@
-namespace OrderFlow.Application.Common.Interfaces;
+namespace OrderFlow.Application.Correlation;
 
 public interface ICorrelated
 {

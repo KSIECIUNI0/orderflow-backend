@@ -1,34 +1,29 @@
 using System.Text.Json;
 using Amazon.SQS;
 using Amazon.SQS.Model;
-using Microsoft.Extensions.Configuration;
-using OrderFlow.Application.Common.EventBus;
+using Microsoft.Extensions.Options;
+using OrderFlow.Application.Messaging;
 using OrderFlow.Application.Orders.Events;
+using OrderFlow.Infrastructure.Configurations;
 
 namespace OrderFlow.Infrastructure.EventBus;
 
-public class SqsEventBus : IEventBus
+public class SqsEventBus(
+    IAmazonSQS sqs,
+    IOptions<OrderCreatedQueueOptions> options) : IEventBus
 {
-    private readonly IAmazonSQS _sqs;
-    private readonly string _orderCreatedQueueUrl;
+    private readonly OrderCreatedQueueOptions _options = options.Value;
 
-    public SqsEventBus(IAmazonSQS sqs, IConfiguration config)
-    {
-        _sqs = sqs;
-
-        _orderCreatedQueueUrl = config["Sqs:OrderCreatedQueueUrl"]
-                                ?? throw new ArgumentNullException(paramName: nameof(config),
-                                    message: "Sqs:OrderCreatedQueueUrl not configured");
-    }
-
-    public async Task PublishOrderCreatedAsync(OrderCreatedEvent @event, string? correlationId,
+    public async Task PublishOrderCreatedAsync(
+        OrderCreatedEvent @event,
+        string? correlationId,
         CancellationToken cancellationToken = default)
     {
         var json = JsonSerializer.Serialize(@event);
 
         var request = new SendMessageRequest
         {
-            QueueUrl = _orderCreatedQueueUrl,
+            QueueUrl = _options.Url,
             MessageBody = json,
             MessageAttributes = new Dictionary<string, MessageAttributeValue>
             {
@@ -43,6 +38,6 @@ public class SqsEventBus : IEventBus
             }
         };
 
-        await _sqs.SendMessageAsync(request, cancellationToken);
+        await sqs.SendMessageAsync(request, cancellationToken);
     }
 }

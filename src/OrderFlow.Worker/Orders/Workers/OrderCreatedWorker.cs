@@ -1,100 +1,70 @@
 using System.Text.Json;
-using Amazon.SQS;
-using Amazon.SQS.Model;
 using MediatR;
-using OrderFlow.Application.Common.Interfaces;
+using Microsoft.Extensions.Options;
+using OrderFlow.Application.Correlation;
+using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Orders.Commands;
 using OrderFlow.Application.Orders.Events;
+using OrderFlow.Infrastructure.Configurations;
 using Serilog.Context;
 
 namespace OrderFlow.Worker.Orders.Workers;
 
-public class OrderCreatedWorker : BackgroundService
+public class OrderCreatedWorker(
+    IMessageReceiver messageReceiver,
+    IOptions<OrderCreatedQueueOptions> orderCreatedQueueOptions,
+    ILogger<OrderCreatedWorker> logger,
+    IServiceScopeFactory serviceScopeFactory,
+    ICorrelationIdAccessor correlationIdAccessor)
+    : BackgroundService
 {
-    private readonly IAmazonSQS _sqs;
-    private readonly ILogger<OrderCreatedWorker> _logger;
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ICorrelationIdAccessor _correlationIdAccessor;
-    
-    private readonly string _queueUrl;
-    private readonly int _maxNumberOfMessages;
-    private readonly int _waitTimeSeconds;
-    private readonly int _visibilityTimeout;
-
-    public OrderCreatedWorker(
-        IAmazonSQS sqs,
-        IConfiguration configuration,
-        ILogger<OrderCreatedWorker> logger,
-        IServiceProvider serviceProvider,
-        ICorrelationIdAccessor correlationIdAccessor)
-    {
-        _sqs = sqs;
-        _logger = logger;
-        _serviceProvider = serviceProvider;
-        _correlationIdAccessor = correlationIdAccessor;
-
-        var sqsConfig = configuration.GetSection("Sqs");
-        _queueUrl = sqsConfig.GetValue<string>("OrderCreatedQueueUrl")
-                    ?? throw new ArgumentNullException(paramName: nameof(configuration), message: "Sqs:OrderCreatedQueueUrl not configured");
-        _maxNumberOfMessages = sqsConfig.GetValue<int>("MaxNumberOfMessages");
-        _waitTimeSeconds = sqsConfig.GetValue<int>("WaitTimeSeconds");
-        _visibilityTimeout = sqsConfig.GetValue<int>("VisibilityTimeout");
-    }
+    private readonly OrderCreatedQueueOptions  _orderCreatedQueueOptions = orderCreatedQueueOptions.Value;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("OrderCreatedWorker listening on {Url}", _queueUrl);
+        logger.LogInformation("OrderCreatedWorker listening on {Url}", _orderCreatedQueueOptions.Url);
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var response = await _sqs.ReceiveMessageAsync(new ReceiveMessageRequest
-            {
-                QueueUrl = _queueUrl,
-                MaxNumberOfMessages = _maxNumberOfMessages,
-                WaitTimeSeconds = _waitTimeSeconds,
-                VisibilityTimeout = _visibilityTimeout,
-                MessageAttributeNames = ["*"]
-            }, stoppingToken);
+            var messages = await messageReceiver.ReceiveAsync(
+                _orderCreatedQueueOptions.Url,
+                stoppingToken);
             
-            if (response.Messages.Count == 0)
+            if (messages.Count == 0)
                 continue;
             
-            foreach (var message in response.Messages)
+            foreach (var message in messages)
             {
+                correlationIdAccessor.Set(message.CorrelationId);
                 await ProcessMessage(message, stoppingToken);
             }
         }
     }
 
-    private async Task ProcessMessage(Message message, CancellationToken stoppingToken)
+    private async Task ProcessMessage(QueueMessage message, CancellationToken stoppingToken)
     {
         try
         {
-            SetCorrelationId(message);
-            using (LogContext.PushProperty("CorrelationId", _correlationIdAccessor.CorrelationId))
+            using (LogContext.PushProperty("CorrelationId", correlationIdAccessor.CorrelationId))
             {
-                _logger.LogInformation("Received message: {Body}", message.Body);
+                logger.LogInformation("Received message: {Body}", message.Body);
                 var @event = JsonSerializer.Deserialize<OrderCreatedEvent>(message.Body);
                 ArgumentNullException.ThrowIfNull(@event);
 
-                _logger.LogInformation("OrderCreatedEvent received for {OrderId}", @event.OrderId);
+                logger.LogInformation("OrderCreatedEvent received for {OrderId}", @event.OrderId);
                 
-                var scope = _serviceProvider.CreateScope();
+                var scope = serviceScopeFactory.CreateScope();
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
-                await mediator.Publish(@event, stoppingToken);
+                
+                var command = new ProcessOrderCreatedCommand(@event.OrderId);
+                await mediator.Send(command, stoppingToken);
 
-                await _sqs.DeleteMessageAsync(_queueUrl, message.ReceiptHandle, stoppingToken);
+                await messageReceiver.DeleteAsync(_orderCreatedQueueOptions.Url, message.ReceiptHandle, stoppingToken);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An error occured while processing message {Id}", message.MessageId);
+            logger.LogError(ex, "An error occured while processing message: {MessageId} - CorrelationId: {CorrelationId}", message.MessageId, correlationIdAccessor.CorrelationId);
         }
-    }
-
-    private void SetCorrelationId(Message message)
-    {
-        _correlationIdAccessor.Set(message.MessageAttributes.TryGetValue("CorrelationId", out var attr)
-            ? attr.StringValue
-            : Guid.NewGuid().ToString());
     }
 }

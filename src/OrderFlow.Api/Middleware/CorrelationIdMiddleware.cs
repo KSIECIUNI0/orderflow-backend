@@ -1,17 +1,10 @@
-using OrderFlow.Application.Common.Interfaces;
+using OrderFlow.Application.Correlation;
 using Serilog.Context;
 
 namespace OrderFlow.Api.Middleware;
 
-public class CorrelationIdMiddleware
+public class CorrelationIdMiddleware(RequestDelegate next)
 {
-    private readonly RequestDelegate _next;
-
-    public CorrelationIdMiddleware(RequestDelegate next)
-    {
-        _next = next;
-    }
-
     public async Task InvokeAsync(HttpContext context, ICorrelationIdAccessor accessor)
     {
         const string headerName = "X-Correlation-Id";
@@ -23,7 +16,7 @@ public class CorrelationIdMiddleware
         using (LogContext.PushProperty("CorrelationId", correlationId))
         {
             accessor.Set(correlationId);
-            await _next(context);
+            await next(context);
         }
     }
 }

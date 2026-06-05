@@ -1,5 +1,5 @@
 using MediatR;
-using OrderFlow.Application.Common.Interfaces;
+using OrderFlow.Application.Correlation;
 using OrderFlow.Application.Orders.DTOs;
 
 namespace OrderFlow.Application.Orders.Commands;

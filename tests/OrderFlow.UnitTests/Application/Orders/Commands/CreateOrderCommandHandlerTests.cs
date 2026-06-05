@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging.Testing;
 using Moq;
-using OrderFlow.Application.Common.EventBus;
+using OrderFlow.Application.Messaging;
 using OrderFlow.Application.Orders;
 using OrderFlow.Application.Orders.Commands;
 using OrderFlow.Domain.Abstractions;

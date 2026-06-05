@@ -1,4 +1,4 @@
-namespace OrderFlow.Worker.Shared.AlertService;
+namespace OrderFlow.Application.Alerts;
 
 public record AlertRequest
 {

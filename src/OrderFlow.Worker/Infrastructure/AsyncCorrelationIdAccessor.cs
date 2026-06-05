@@ -1,4 +1,4 @@
-using OrderFlow.Application.Common.Interfaces;
+using OrderFlow.Application.Correlation;
 
 namespace OrderFlow.Worker.Infrastructure;
 

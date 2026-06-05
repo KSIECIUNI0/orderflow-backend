@@ -1,4 +1,4 @@
-namespace OrderFlow.Worker.Shared.FailureStore;
+namespace OrderFlow.Application.Failures;
 
 public interface IFailureStore
 {
