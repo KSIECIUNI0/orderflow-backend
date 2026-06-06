@@ -30,7 +30,10 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          dotnet test tests/OrderFlow.UnitTests \
+          dotnet test tests/OrderFlow.Application.Tests \
+            --collect:"XPlat Code Coverage" \
+            --results-directory TestResults
+          dotnet test tests/OrderFlow.Domain.Tests \
             --collect:"XPlat Code Coverage" \
             --results-directory TestResults
           dotnet test tests/OrderFlow.IntegrationTests \

@@ -31,8 +31,11 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
         
-      - name: Run Tests (Unit + Integration)
-        run: dotnet test --no-build --configuration Release
+      - name: Run Unit Tests
+        run: dotnet test --filter Category!=Integration --no-build --configuration Release
+        
+      - name: Run Integration Tests
+        run: dotnet test --filter Category=Integration --no-build --configuration Release
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

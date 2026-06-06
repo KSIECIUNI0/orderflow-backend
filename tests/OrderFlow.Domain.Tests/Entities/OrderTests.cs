@@ -1,19 +1,20 @@
 using FluentAssertions;
-using OrderFlow.Domain.Entities;
+using OrderFlow.Testing.Builders;
+using OrderFlow.Testing.Builders.Entities;
 
-namespace OrderFlow.UnitTests.Domain.Entities;
+namespace OrderFlow.Domain.Tests.Entities;
 
 public class OrderTests
 {
-    private const int MaxProductNameLength = 100;
-    
     [Fact]
     public void Ctor_ShouldThrowAnArgumentException_WhenProductNameIsEmpty()
     {
         const int quantity = 1;
-        var productName = string.Empty;
+        var builder = new OrderBuilder()
+            .WithEmptyProductName()
+            .WithQuantity(quantity);
         
-        var act = () => new Order(productName, quantity);
+        var act = () => builder.Build();
 
         act.Should().Throw<ArgumentException>()
             .WithParameterName("productName");
@@ -23,9 +24,11 @@ public class OrderTests
     public void Ctor_ShouldThrowAnArgumentException_WhenProductNameIsTooLong()
     {
         const int quantity = 1;
-        var productName = new string('x', MaxProductNameLength + 50);
+        var builder = new OrderBuilder()
+            .WithTooLongProductName()
+            .WithQuantity(quantity);
         
-        var act = () => new Order(productName, quantity);
+        var act = () => builder.Build();
 
         act.Should().Throw<ArgumentOutOfRangeException>()
             .WithParameterName("productName");
@@ -36,9 +39,10 @@ public class OrderTests
     [InlineData(0)]
     public void Ctor_ShouldThrowAnArgumentException_WhenQuantityIsNegativeOrZero(int quantity)
     {
-        var productName = new string('x', MaxProductNameLength);
+        var builder = new OrderBuilder()
+            .WithQuantity(quantity);
         
-        var act = () => new Order(productName, quantity);
+        var act = () => builder.Build();
 
         act.Should().Throw<ArgumentOutOfRangeException>()
             .WithParameterName("quantity");
@@ -50,11 +54,14 @@ public class OrderTests
         const string productName = "product name";
         const int quantity = 1;
         
-        var result = new Order(productName, quantity);
+        var sut = new OrderBuilder()
+            .WithProductName(productName)
+            .WithQuantity(quantity)
+            .Build();
 
-        result.Id.Should().NotBeEmpty();
-        result.ProductName.Should().Be(productName);
-        result.Quantity.Should().Be(quantity);
+        sut.Id.Should().NotBeEmpty();
+        sut.ProductName.Should().Be(productName);
+        sut.Quantity.Should().Be(quantity);
     }
     
     [Fact]
@@ -62,8 +69,9 @@ public class OrderTests
     {
         const int newQuantity = 2;
         var newProductName = string.Empty;
+        var sut = new OrderBuilder().Build();
         
-        var act = () => Sut().Update(newProductName, newQuantity);
+        var act = () => sut.Update(newProductName, newQuantity);
 
         act.Should().Throw<ArgumentException>()
             .WithParameterName("productName");
@@ -73,9 +81,11 @@ public class OrderTests
     public void Update_ShouldThrowAnArgumentException_WhenProductNameIsTooLong()
     {
         const int newQuantity = 2;
-        var newProductName = new string('x', MaxProductNameLength + 50);
+
+        var newTooLongProductName = OrderBuilder.TooLongProductName();
+        var sut = new OrderBuilder().Build();
         
-        var act = () => Sut().Update(newProductName, newQuantity);
+        var act = () => sut.Update(newTooLongProductName, newQuantity);
 
         act.Should().Throw<ArgumentOutOfRangeException>()
             .WithParameterName("productName");
@@ -86,9 +96,10 @@ public class OrderTests
     [InlineData(0)]
     public void Update_ShouldThrowAnArgumentException_WhenQuantityIsNegativeOrZero(int newQuantity)
     {
-        var newProductName = new string('y', MaxProductNameLength);
+        const string newProductName = "ValidProductName";
+        var sut = new OrderBuilder().Build();
         
-        var act = () => Sut().Update(newProductName, newQuantity);
+        var act = () => sut.Update(newProductName, newQuantity);
 
         act.Should().Throw<ArgumentOutOfRangeException>()
             .WithParameterName("quantity");
@@ -97,7 +108,7 @@ public class OrderTests
     [Fact]
     public void Update_ShouldUpdateAnInstance_WhenProductNameIsNotEmptyAndQuantityIsGreaterThanZero()
     {
-        var sut = Sut();
+        var sut = new OrderBuilder().Build();
         var expectedId = sut.Id;
         const string newProductName = "new product name";
         const int newQuantity = 2;
@@ -108,6 +119,4 @@ public class OrderTests
         sut.ProductName.Should().Be(newProductName);
         sut.Quantity.Should().Be(newQuantity);
     }
-
-    private static Order Sut() => new("product name", 1);
 }

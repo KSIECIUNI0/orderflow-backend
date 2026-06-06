@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using OrderFlow.Api.Infrastructure;
 using OrderFlow.Api.Middleware;
 using OrderFlow.Application.Correlation;
@@ -5,6 +6,7 @@ using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
 
 namespace OrderFlow.Api;
 
+[ExcludeFromCodeCoverage]
 public static class DependencyInjection
 {
     public static IServiceCollection AddApi(this IServiceCollection services)

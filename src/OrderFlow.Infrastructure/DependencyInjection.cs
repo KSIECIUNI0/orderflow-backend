@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Amazon.Runtime;
 using Amazon.S3;
 using Amazon.SQS;
@@ -19,6 +20,7 @@ using OrderFlow.Infrastructure.Persistence;
 
 namespace OrderFlow.Infrastructure;
 
+[ExcludeFromCodeCoverage]
 public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(

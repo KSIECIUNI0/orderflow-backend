@@ -1,23 +1,25 @@
 using FluentValidation.TestHelper;
-using OrderFlow.Application.Orders.DTOs;
 using OrderFlow.Application.Orders.Validators;
+using OrderFlow.Testing.Builders.DTOs;
 
-namespace OrderFlow.UnitTests.Application.Orders.Validators;
+namespace OrderFlow.Application.Tests.Orders.Validators;
 
 public class CreateOrderRequestValidatorTests
 {
-    private const int MaxProductNameLength = 100;
     private readonly CreateOrderRequestValidator _sut = new();
-
+    
     [Fact]
     public void Validate_ShouldHaveValidationErrorForProductName_WhenProductNameIsEmpty()
     {
-        const int quantity = 1;
-        var productName = string.Empty;
-        var model = new CreateOrderRequest(productName, quantity);
+        // Arrange
+        var model = new CreateOrderRequestBuilder()
+            .WithEmptyProductName()
+            .Build();
 
+        // Act
         var result = _sut.TestValidate(model);
 
+        // Assert
         result.ShouldHaveValidationErrorFor(x => x.ProductName)
             .WithErrorMessage("Product name is required");
     }
@@ -25,12 +27,15 @@ public class CreateOrderRequestValidatorTests
     [Fact]
     public void Validate_ShouldHaveValidationErrorForProductName_WhenProductNameIsTooLong()
     {
-        const int quantity = 1;
-        var productName = new string('A', MaxProductNameLength + 50);
-        var model = new CreateOrderRequest(productName, quantity);
+        // Arrange
+        var model = new CreateOrderRequestBuilder()
+            .WithTooLongProductName()
+            .Build();
 
+        // Act
         var result = _sut.TestValidate(model);
 
+        // Assert
         result.ShouldHaveValidationErrorFor(x => x.ProductName)
             .WithErrorMessage("Product name must not exceed 100 characters");
     }
@@ -38,12 +43,15 @@ public class CreateOrderRequestValidatorTests
     [Fact]
     public void Validate_ShouldHaveValidationErrorForQuantity_WhenQuantityIsNegative()
     {
-        const int quantity = -1;
-        var productName = new  string('A', MaxProductNameLength);
-        var model = new CreateOrderRequest(productName, quantity);
+        // Arrange
+        var model = new CreateOrderRequestBuilder()
+            .WithNegativeQuantity()
+            .Build();
 
+        // Act
         var result = _sut.TestValidate(model);
 
+        // Assert
         result.ShouldHaveValidationErrorFor(x => x.Quantity)
             .WithErrorMessage("Quantity must be greater than 0");
     }
@@ -51,12 +59,13 @@ public class CreateOrderRequestValidatorTests
     [Fact]
     public void Validate_ShouldNotHaveValidationError_WhenModelIsValid()
     {
-        const int quantity = 10;
-        var productName = new  string('A', MaxProductNameLength);
-        var model = new CreateOrderRequest(productName, quantity);
+        // Arrange
+        var model = new CreateOrderRequestBuilder().Build();
 
+        // Act
         var result = _sut.TestValidate(model);
 
+        // Assert
         result.ShouldNotHaveAnyValidationErrors();
     }
 }
