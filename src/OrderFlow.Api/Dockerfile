@@ -8,8 +8,10 @@ COPY src/OrderFlow.Application/*.csproj src/OrderFlow.Application/
 COPY src/OrderFlow.Domain/*.csproj src/OrderFlow.Domain/
 COPY src/OrderFlow.Infrastructure/*.csproj src/OrderFlow.Infrastructure/
 COPY src/OrderFlow.Worker/*.csproj src/OrderFlow.Worker/
-COPY tests/OrderFlow.UnitTests/*.csproj tests/OrderFlow.UnitTests/
+COPY tests/OrderFlow.Application.Tests/*.csproj tests/OrderFlow.Application.Tests/
+COPY tests/OrderFlow.Domain.Tests/*.csproj tests/OrderFlow.Domain.Tests/
 COPY tests/OrderFlow.IntegrationTests/*.csproj tests/OrderFlow.IntegrationTests/
+COPY tests/OrderFlow.Testing/*.csproj tests/OrderFlow.Testing/
 
 RUN dotnet restore
 
