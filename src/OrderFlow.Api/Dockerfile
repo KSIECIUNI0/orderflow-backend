@@ -3,8 +3,8 @@ WORKDIR /app
 
 COPY . .
 
-RUN dotnet restore "OrderFlow.Api/OrderFlow.Api.csproj"
-RUN dotnet publish "OrderFlow.Api/OrderFlow.Api.csproj" \
+RUN dotnet restore src/OrderFlow.Api/OrderFlow.Api.csproj
+RUN dotnet publish src/OrderFlow.Api/OrderFlow.Api.csproj \
     -c Release \
     -o /app/out \
     --no-restore
