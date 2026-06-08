@@ -31,7 +31,7 @@ public class DeleteOrderCommandHandlerTests
         var sut = builder.Build();
 
         // Act
-        var result = await sut.Handle(command, CancellationToken.None);
+        var result = await sut.Handle(command, TestContext.Current.CancellationToken);
         
         // Assert
         await repository
@@ -77,7 +77,7 @@ public class DeleteOrderCommandHandlerTests
         var sut = builder.Build();
         
         // Act
-        var result = await sut.Handle(command, CancellationToken.None);
+        var result = await sut.Handle(command, TestContext.Current.CancellationToken);
         
         // Assert
         await repository
@@ -118,7 +118,7 @@ public class DeleteOrderCommandHandlerTests
         var sut = builder.Build();
         
         // Act
-        var act = () =>  sut.Handle(command, CancellationToken.None);
+        var act = () =>  sut.Handle(command, TestContext.Current.CancellationToken);
 
         // Assert
         await act.Should()

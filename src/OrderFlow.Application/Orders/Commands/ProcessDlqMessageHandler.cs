@@ -19,29 +19,30 @@ public class ProcessDlqMessageHandler(
             request.QueueMessage.MessageId,
             request.QueueMessage.Body);
 
-        await SaveFailedMessageAsync(request.QueueMessage, request.EventType, request.QueueName);
-        await SendAlertAsync(request.QueueMessage);
+        await SaveFailedMessageAsync(request, cancellationToken);
+        await SendAlertAsync(request.QueueMessage, cancellationToken);
     }
     
     private async Task SaveFailedMessageAsync(
-        QueueMessage message,
-        string eventType,
-        string queueName)
+        ProcessDlqMessageCommand command,
+        CancellationToken cancellationToken)
     {
         logger.LogInformation("Saving failed message to FailureStore...");
         var failedMessage = new FailedMessage
         {
-            MessageId = message.MessageId,
-            QueueName = queueName,
-            EventType = eventType,
-            CorrelationId = message.CorrelationId,
-            Body = message.Body
+            MessageId = command.QueueMessage.MessageId,
+            QueueName = command.QueueName,
+            EventType = command.EventType,
+            CorrelationId = command.QueueMessage.CorrelationId,
+            Body = command.QueueMessage.Body
         };
         
-        await failureStore.SaveFailedMessageAsync(failedMessage);
+        await failureStore.SaveFailedMessageAsync(failedMessage, cancellationToken);
     }
 
-    private async Task SendAlertAsync(QueueMessage message)
+    private async Task SendAlertAsync(
+        QueueMessage message,
+        CancellationToken cancellationToken)
     {
         logger.LogInformation("Sending alert request to AlertService...");
         var request = new AlertRequest
@@ -52,6 +53,6 @@ public class ProcessDlqMessageHandler(
             Error = "The message reached DLQ"
         };
             
-        await alertService.SendAsync(request);
+        await alertService.SendAsync(request, cancellationToken);
     }
 }

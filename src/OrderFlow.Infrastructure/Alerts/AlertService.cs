@@ -5,9 +5,9 @@ namespace OrderFlow.Infrastructure.Alerts;
 
 public class AlertService(HttpClient httpClient) : IAlertService
 {
-    public async Task SendAsync(AlertRequest request)
+    public async Task SendAsync(AlertRequest request, CancellationToken cancellationToken = default)
     {
-        var response = await httpClient.PostAsJsonAsync("/alerts", request);
+        var response = await httpClient.PostAsJsonAsync("/alerts", request, cancellationToken);
         response.EnsureSuccessStatusCode();
     }
 }

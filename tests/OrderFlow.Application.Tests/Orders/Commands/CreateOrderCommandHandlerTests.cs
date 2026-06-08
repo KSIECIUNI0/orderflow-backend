@@ -40,7 +40,7 @@ public class CreateOrderCommandHandlerTests
         var sut = builder.Build();
 
         // Act
-        var result = await sut.Handle(command, CancellationToken.None);
+        var result = await sut.Handle(command, TestContext.Current.CancellationToken);
 
         // Assert
         await repository
@@ -67,7 +67,7 @@ public class CreateOrderCommandHandlerTests
         var sut = new CreateOrderCommandHandlerBuilder().Build();
         
         // Act
-        var act = () => sut.Handle(command, CancellationToken.None);
+        var act = () => sut.Handle(command, TestContext.Current.CancellationToken);
 
         // Assert
         await act.Should().ThrowAsync<ArgumentException>();

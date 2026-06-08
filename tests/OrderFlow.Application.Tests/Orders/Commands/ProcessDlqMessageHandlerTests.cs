@@ -39,7 +39,7 @@ public class ProcessDlqMessageHandlerTests
         var sut = builder.Build();
 
         // Act
-        await sut.Handle(command, CancellationToken.None);
+        await sut.Handle(command, TestContext.Current.CancellationToken);
 
         // Assert
         var log = logger.Collector.GetSnapshot()
@@ -65,7 +65,8 @@ public class ProcessDlqMessageHandlerTests
                     message.QueueName == queueName &&
                     message.EventType == eventType &&
                     message.CorrelationId == correlationId &&
-                    message.Body == body));
+                    message.Body == body),
+                Arg.Any<CancellationToken>());
 
         await alertService
             .Received(1)
@@ -74,7 +75,8 @@ public class ProcessDlqMessageHandlerTests
                     alert.MessageId == messageId &&
                     alert.CorrelationId == correlationId &&
                     alert.Type == "ERROR" &&
-                    alert.Error == "The message reached DLQ"));
+                    alert.Error == "The message reached DLQ"),
+        Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -89,13 +91,13 @@ public class ProcessDlqMessageHandlerTests
         var alertService = builder.FreezeAlertService();
 
         failureStore
-            .SaveFailedMessageAsync(Arg.Any<FailedMessage>())
+            .SaveFailedMessageAsync(Arg.Any<FailedMessage>(), Arg.Any<CancellationToken>())
             .Throws(fakeException);
         
         var sut = builder.Build();
         
         // Act
-        var act = () => sut.Handle(command, CancellationToken.None);
+        var act = () => sut.Handle(command, TestContext.Current.CancellationToken);
         
         // Assert
         await act.Should().ThrowAsync<FakeException>()
@@ -103,7 +105,7 @@ public class ProcessDlqMessageHandlerTests
         
         await alertService
             .DidNotReceive()
-            .SendAsync(Arg.Any<AlertRequest>());
+            .SendAsync(Arg.Any<AlertRequest>(), Arg.Any<CancellationToken>());
     }
     
     [Fact]
@@ -118,13 +120,13 @@ public class ProcessDlqMessageHandlerTests
         var alertService = builder.FreezeAlertService();
 
         alertService
-            .SendAsync(Arg.Any<AlertRequest>())
+            .SendAsync(Arg.Any<AlertRequest>(), Arg.Any<CancellationToken>())
             .Throws(fakeException);
         
         var sut = builder.Build();
         
         // Act
-        var act = () => sut.Handle(command, CancellationToken.None);
+        var act = () => sut.Handle(command, TestContext.Current.CancellationToken);
         
         // Assert
         await act.Should().ThrowAsync<FakeException>()
@@ -132,6 +134,6 @@ public class ProcessDlqMessageHandlerTests
 
         await failureStore
             .Received(1)
-            .SaveFailedMessageAsync(Arg.Any<FailedMessage>());
+            .SaveFailedMessageAsync(Arg.Any<FailedMessage>(), Arg.Any<CancellationToken>());
     }
 }

@@ -30,7 +30,7 @@ public class GetOrderByIdQueryHandlerTests
         var sut = builder.Build();
         
         // Act
-        var result = await sut.Handle(query, CancellationToken.None);
+        var result = await sut.Handle(query, TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().BeNull();
@@ -69,7 +69,7 @@ public class GetOrderByIdQueryHandlerTests
         var sut = builder.Build();
         
         // Act
-        var result = await sut.Handle(query, CancellationToken.None);
+        var result = await sut.Handle(query, TestContext.Current.CancellationToken);
 
         // Assert
         result.Should().NotBeNull();
@@ -102,7 +102,7 @@ public class GetOrderByIdQueryHandlerTests
         var sut =  builder.Build();
         
         // Act
-        var act = () => sut.Handle(query, CancellationToken.None);
+        var act = () => sut.Handle(query, TestContext.Current.CancellationToken);
 
         // Assert
         await act.Should()

@@ -127,8 +127,8 @@ public class OrdersControllerTests : IAsyncLifetime
         const int order1Quantity = 1;
         const string order2ProductName = "product name 2";
         const int order2Quantity = 2;
-        var order1Id = await _orderDataHelper.InsertAsync(order1ProductName, order1Quantity);
-        var order2Id = await _orderDataHelper.InsertAsync(order2ProductName, order2Quantity);
+        var order1Id = await _orderDataHelper.InsertAsync(order1ProductName, order1Quantity, TestContext.Current.CancellationToken);
+        var order2Id = await _orderDataHelper.InsertAsync(order2ProductName, order2Quantity, TestContext.Current.CancellationToken);
         
         // Act
         var response = await _client.GetAsync("api/orders", TestContext.Current.CancellationToken);
@@ -157,7 +157,7 @@ public class OrdersControllerTests : IAsyncLifetime
     [Fact]
     public async Task GetAll_ShouldReturnEmptyCollection_WhenThereAreNoOrders()
     {
-        var orderCount = await _orderDataHelper.CountAsync();
+        var orderCount = await _orderDataHelper.CountAsync(TestContext.Current.CancellationToken);
 
         orderCount.Should().Be(0);
         
@@ -203,7 +203,7 @@ public class OrdersControllerTests : IAsyncLifetime
         const string newProductName = "New product name";
         const int newQuantity = 100;
         
-        var orderId = await _orderDataHelper.InsertAsync("productName", 1);
+        var orderId = await _orderDataHelper.InsertAsync("productName", 1, TestContext.Current.CancellationToken);
         
         var request = new CreateOrderRequestBuilder()
             .WithProductName(newProductName)
@@ -236,7 +236,7 @@ public class OrdersControllerTests : IAsyncLifetime
     [Fact]
     public async Task DeleteOrder_ShouldDeleteOrder_WhenExists()
     {
-        var orderId = await _orderDataHelper.InsertAsync("productName", 1);
+        var orderId = await _orderDataHelper.InsertAsync("productName", 1, TestContext.Current.CancellationToken);
         
         var deleteResponse = await _client.DeleteAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
 
