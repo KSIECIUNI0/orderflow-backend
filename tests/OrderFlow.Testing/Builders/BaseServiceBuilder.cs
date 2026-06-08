@@ -13,6 +13,11 @@ public abstract class BaseServiceBuilder<TSut> where TSut : class
         return _fixture.Freeze<TDependency>();
     }
 
+    protected void Inject<TDependency>(TDependency dependency) where TDependency : class
+    {
+        _fixture.Inject(dependency);
+    }
+
     public virtual TSut Build()
     {
         return _fixture.Create<TSut>();

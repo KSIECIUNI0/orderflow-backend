@@ -3,6 +3,7 @@ using Microsoft.Extensions.Options;
 using OrderFlow.Application.Correlation;
 using OrderFlow.Application.Messaging;
 using OrderFlow.Application.Orders.Commands;
+using OrderFlow.Application.Orders.Events;
 using OrderFlow.Infrastructure.Configurations;
 using Serilog.Context;
 
@@ -47,7 +48,7 @@ public class OrderCreatedDlqWorker(
                 var scope = serviceScopeFactory.CreateScope();
                 var mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
                  
-                var command = new ProcessDlqMessageCommand(message, _orderCreatedDlqOptions.OrderCreatedQueueName);
+                var command = new ProcessDlqMessageCommand(message, nameof(OrderCreatedEvent), _orderCreatedDlqOptions.OrderCreatedQueueName);
                 await mediator.Send(command, stoppingToken);
 
                 await messageReceiver.DeleteAsync(_orderCreatedDlqOptions.Url, message.ReceiptHandle, stoppingToken);

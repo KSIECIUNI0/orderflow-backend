@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using OrderFlow.Application.Alerts;
 using OrderFlow.Application.Failures;
 using OrderFlow.Application.Messaging;
-using OrderFlow.Application.Orders.Events;
 
 namespace OrderFlow.Application.Orders.Commands;
 
@@ -20,18 +19,21 @@ public class ProcessDlqMessageHandler(
             request.QueueMessage.MessageId,
             request.QueueMessage.Body);
 
-        await SaveFailedMessageAsync(request.QueueMessage, request.QueueName);
+        await SaveFailedMessageAsync(request.QueueMessage, request.EventType, request.QueueName);
         await SendAlertAsync(request.QueueMessage);
     }
     
-    private async Task SaveFailedMessageAsync(QueueMessage message, string queueName)
+    private async Task SaveFailedMessageAsync(
+        QueueMessage message,
+        string eventType,
+        string queueName)
     {
         logger.LogInformation("Saving failed message to FailureStore...");
         var failedMessage = new FailedMessage
         {
             MessageId = message.MessageId,
             QueueName = queueName,
-            EventType = nameof(OrderCreatedEvent),
+            EventType = eventType,
             CorrelationId = message.CorrelationId,
             Body = message.Body
         };
