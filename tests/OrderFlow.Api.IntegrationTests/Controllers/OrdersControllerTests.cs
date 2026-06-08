@@ -31,14 +31,14 @@ public class OrdersControllerTests : IAsyncLifetime
         _queueUrl = awsFixture.QueueUrl;
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _orderDataHelper.ClearAsync();
         await _sqsHelper.ClearAsync(_queueUrl);
     }
 
-    public Task DisposeAsync() 
-        => Task.CompletedTask;
+    public ValueTask DisposeAsync() 
+        => ValueTask.CompletedTask;
     
     [Fact]
     public async Task CreateOrder_ShouldCreateOrder_WhenModelIsValid()
@@ -62,22 +62,22 @@ public class OrdersControllerTests : IAsyncLifetime
         
         var correlationId = createdResponse.Headers.GetValues("X-Correlation-ID").First();
         
-        var createdOrderResponse = await createdResponse.Content.ReadFromJsonAsync<OrderResponse>();
+        var createdOrderResponse = await createdResponse.Content.ReadFromJsonAsync<OrderResponse>(TestContext.Current.CancellationToken);
         createdOrderResponse.Should().NotBeNull();
         createdOrderResponse.Id.Should().NotBeEmpty();
         createdOrderResponse.ProductName.Should().Be(productName);
         createdOrderResponse.Quantity.Should().Be(quantity);
 
-        var getResponse = await _client.GetAsync($"/api/orders/{createdOrderResponse.Id}");
+        var getResponse = await _client.GetAsync($"/api/orders/{createdOrderResponse.Id}", TestContext.Current.CancellationToken);
         
         getResponse.Should().Be200Ok();
-        var orderResponse = await getResponse.Content.ReadFromJsonAsync<OrderResponse>();
+        var orderResponse = await getResponse.Content.ReadFromJsonAsync<OrderResponse>(TestContext.Current.CancellationToken);
         orderResponse.Should().NotBeNull();
         orderResponse.Id.Should().Be(createdOrderResponse.Id);
         orderResponse.ProductName.Should().Be(createdOrderResponse.ProductName);
         orderResponse.Quantity.Should().Be(createdOrderResponse.Quantity);
 
-        var messages = await _sqsHelper.ReadAllAsync(_queueUrl);
+        var messages = await _sqsHelper.ReadAllAsync(_queueUrl, TestContext.Current.CancellationToken);
         messages.Should().NotBeNullOrEmpty();
         messages.Should().HaveCount(1);
         var message = messages.First();
@@ -114,7 +114,7 @@ public class OrdersControllerTests : IAsyncLifetime
     {
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         
-        var response  = await _client.GetAsync($"/api/orders/{orderId}");
+        var response  = await _client.GetAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
         
         response.Should().Be404NotFound();
     }
@@ -131,7 +131,7 @@ public class OrdersControllerTests : IAsyncLifetime
         var order2Id = await _orderDataHelper.InsertAsync(order2ProductName, order2Quantity);
         
         // Act
-        var response = await _client.GetAsync("api/orders");
+        var response = await _client.GetAsync("api/orders", TestContext.Current.CancellationToken);
         
         // Assert
         response.Should()
@@ -161,7 +161,7 @@ public class OrdersControllerTests : IAsyncLifetime
 
         orderCount.Should().Be(0);
         
-        var response = await _client.GetAsync("api/orders");
+        var response = await _client.GetAsync("api/orders", TestContext.Current.CancellationToken);
 
         response.Should()
             .Be200Ok()
@@ -214,10 +214,10 @@ public class OrdersControllerTests : IAsyncLifetime
 
         updateResponse.Should().Be204NoContent();
         
-        var getResponse = await _client.GetAsync($"/api/orders/{orderId}");
+        var getResponse = await _client.GetAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
         
         getResponse.Should().Be200Ok();
-        var orderResponse = await getResponse.Content.ReadFromJsonAsync<OrderResponse>();
+        var orderResponse = await getResponse.Content.ReadFromJsonAsync<OrderResponse>(TestContext.Current.CancellationToken);
         
         orderResponse!.ProductName.Should().Be(newProductName);
         orderResponse.Quantity.Should().Be(newQuantity);
@@ -228,7 +228,7 @@ public class OrdersControllerTests : IAsyncLifetime
     {
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         
-        var response  = await _client.DeleteAsync($"/api/orders/{orderId}");
+        var response  = await _client.DeleteAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
 
         response.Should().Be404NotFound();
     }
@@ -238,11 +238,11 @@ public class OrdersControllerTests : IAsyncLifetime
     {
         var orderId = await _orderDataHelper.InsertAsync("productName", 1);
         
-        var deleteResponse = await _client.DeleteAsync($"/api/orders/{orderId}");
+        var deleteResponse = await _client.DeleteAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
 
         deleteResponse.Should().Be204NoContent();
         
-        var getResponse = await _client.GetAsync($"/api/orders/{orderId}");
+        var getResponse = await _client.GetAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
         
         getResponse.Should().Be404NotFound();
     }

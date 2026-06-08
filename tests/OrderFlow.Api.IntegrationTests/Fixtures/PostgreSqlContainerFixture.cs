@@ -18,9 +18,9 @@ public class PostgreSqlContainerFixture : IAsyncLifetime
     public string ConnectionString 
         => _container.GetConnectionString();
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
         => await _container.StartAsync();
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
         => await _container.StopAsync();
 }

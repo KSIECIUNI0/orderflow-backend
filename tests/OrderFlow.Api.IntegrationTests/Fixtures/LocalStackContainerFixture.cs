@@ -8,7 +8,7 @@ public class LocalStackContainerFixture : IAsyncLifetime
 {
     private const string QueueName = "order-created-queue";
     private readonly LocalStackContainer _container;
-    private string _queueUrl;
+    private string? _queueUrl;
 
     public LocalStackContainerFixture()
     {
@@ -23,7 +23,7 @@ public class LocalStackContainerFixture : IAsyncLifetime
     
     public string QueueUrl => _queueUrl ?? QueueName;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         await _container.StartAsync();
         
@@ -39,6 +39,6 @@ public class LocalStackContainerFixture : IAsyncLifetime
         _queueUrl = createQueueResponse.QueueUrl;
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
         => await _container.DisposeAsync();
 }
