@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using OrderFlow.Api.IntegrationTests.Helpers;
 using OrderFlow.Infrastructure;
-using OrderFlow.IntegrationTests.Helpers;
 
-namespace OrderFlow.IntegrationTests.Factories;
+namespace OrderFlow.Api.IntegrationTests.Factories;
 
 public class OrderFlowApiFactory : WebApplicationFactory<Program>
 {
@@ -24,6 +24,8 @@ public class OrderFlowApiFactory : WebApplicationFactory<Program>
     }
 
     public OrderDataHelper OrderDataHelper => new(Services);
+    
+    public SqsHelper SqsHelper => new(Services);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {

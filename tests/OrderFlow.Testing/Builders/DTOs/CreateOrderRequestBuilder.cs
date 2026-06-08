@@ -12,6 +12,12 @@ public class CreateOrderRequestBuilder
     
     private static string TooLongProductName() => new('x', MaxProductNameLength + 1000);
     
+    public CreateOrderRequestBuilder WithProductName(string value)
+    {
+        _productName = value;
+        return this;
+    }
+    
     public CreateOrderRequestBuilder WithTooLongProductName()
     {
         _productName = TooLongProductName();
@@ -21,6 +27,12 @@ public class CreateOrderRequestBuilder
     public CreateOrderRequestBuilder WithEmptyProductName()
     {
         _productName = string.Empty;
+        return this;
+    }
+    
+    public CreateOrderRequestBuilder WithQuantity(int value)
+    {
+        _quantity = value;
         return this;
     }
     

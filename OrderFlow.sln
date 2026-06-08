@@ -17,7 +17,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderFlow.Worker", "src\Ord
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0AB3BF05-4346-4AA6-1389-037BE0695223}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderFlow.IntegrationTests", "tests\OrderFlow.IntegrationTests\OrderFlow.IntegrationTests.csproj", "{9939E827-A2CE-4C2E-905F-216C3E7BE0CE}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderFlow.Api.IntegrationTests", "tests\OrderFlow.Api.IntegrationTests\OrderFlow.Api.IntegrationTests.csproj", "{9939E827-A2CE-4C2E-905F-216C3E7BE0CE}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OrderFlow.AlertService", "src\OrderFlow.AlertService\OrderFlow.AlertService.csproj", "{1169065C-03CA-4461-9992-24F1202F6710}"
 EndProject

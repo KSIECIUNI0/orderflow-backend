@@ -1,4 +1,4 @@
-namespace OrderFlow.IntegrationTests.Fixtures;
+namespace OrderFlow.Api.IntegrationTests.Fixtures;
 
 [CollectionDefinition("Integration tests collection")]
 public class IntegrationTestsCollection :

@@ -2,11 +2,13 @@ using Amazon.Runtime;
 using Amazon.SQS;
 using Testcontainers.LocalStack;
 
-namespace OrderFlow.IntegrationTests.Fixtures;
+namespace OrderFlow.Api.IntegrationTests.Fixtures;
 
 public class LocalStackContainerFixture : IAsyncLifetime
 {
+    private const string QueueName = "order-created-queue";
     private readonly LocalStackContainer _container;
+    private string _queueUrl;
 
     public LocalStackContainerFixture()
     {
@@ -18,6 +20,8 @@ public class LocalStackContainerFixture : IAsyncLifetime
     }
     
     public string SqsUrl => _container.GetConnectionString();
+    
+    public string QueueUrl => _queueUrl ?? QueueName;
 
     public async Task InitializeAsync()
     {
@@ -31,7 +35,8 @@ public class LocalStackContainerFixture : IAsyncLifetime
                 UseHttp = true
             });
 
-        await sqsClient.CreateQueueAsync("order-created-queue");
+        var createQueueResponse = await sqsClient.CreateQueueAsync(QueueName);
+        _queueUrl = createQueueResponse.QueueUrl;
     }
 
     public async Task DisposeAsync()

@@ -1,17 +1,22 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using FluentAssertions;
+using OrderFlow.Api.IntegrationTests.Factories;
+using OrderFlow.Api.IntegrationTests.Fixtures;
+using OrderFlow.Api.IntegrationTests.Helpers;
 using OrderFlow.Application.Orders.DTOs;
-using OrderFlow.IntegrationTests.Factories;
-using OrderFlow.IntegrationTests.Fixtures;
-using OrderFlow.IntegrationTests.Helpers;
+using OrderFlow.Application.Orders.Events;
+using OrderFlow.Testing.Builders.DTOs;
 
-namespace OrderFlow.IntegrationTests.Controllers;
+namespace OrderFlow.Api.IntegrationTests.Controllers;
 
 [Collection("Integration tests collection")]
 public class OrdersControllerTests : IAsyncLifetime
 {
     private readonly HttpClient _client;
     private readonly OrderDataHelper _orderDataHelper;
+    private readonly SqsHelper _sqsHelper;
+    private readonly string _queueUrl;
 
     public OrdersControllerTests(
         PostgreSqlContainerFixture dbFixture,
@@ -22,10 +27,15 @@ public class OrdersControllerTests : IAsyncLifetime
             awsFixture.SqsUrl);
         _client = factory.CreateClient();
         _orderDataHelper = factory.OrderDataHelper;
+        _sqsHelper = factory.SqsHelper;
+        _queueUrl = awsFixture.QueueUrl;
     }
-    
+
     public async Task InitializeAsync()
-        => await _orderDataHelper.ClearAsync();
+    {
+        await _orderDataHelper.ClearAsync();
+        await _sqsHelper.ClearAsync(_queueUrl);
+    }
 
     public Task DisposeAsync() 
         => Task.CompletedTask;
@@ -33,15 +43,24 @@ public class OrdersControllerTests : IAsyncLifetime
     [Fact]
     public async Task CreateOrder_ShouldCreateOrder_WhenModelIsValid()
     {
+        // Arrange
         const string productName = "product name";
         const int quantity = 1;
-        var request = new CreateOrderRequest(productName, quantity);
+        var request = new CreateOrderRequestBuilder()
+            .WithProductName(productName)
+            .WithQuantity(quantity)
+            .Build();
         
+        // Act
         var createdResponse = await _client.PostAsJsonAsync("/api/orders", request);
 
+        // Assert
         createdResponse.Should()
             .Be201Created()
-            .And.HaveHeader("Location").And.NotBeEmpty();
+            .And.HaveHeader("Location").And.NotBeEmpty()
+            .And.HaveHeader("X-Correlation-ID").And.NotBeEmpty();
+        
+        var correlationId = createdResponse.Headers.GetValues("X-Correlation-ID").First();
         
         var createdOrderResponse = await createdResponse.Content.ReadFromJsonAsync<OrderResponse>();
         createdOrderResponse.Should().NotBeNull();
@@ -57,12 +76,30 @@ public class OrdersControllerTests : IAsyncLifetime
         orderResponse.Id.Should().Be(createdOrderResponse.Id);
         orderResponse.ProductName.Should().Be(createdOrderResponse.ProductName);
         orderResponse.Quantity.Should().Be(createdOrderResponse.Quantity);
+
+        var messages = await _sqsHelper.ReadAllAsync(_queueUrl);
+        messages.Should().NotBeNullOrEmpty();
+        messages.Should().HaveCount(1);
+        var message = messages.First();
+        
+        var messageCorrelationId = message.MessageAttributes.TryGetValue("CorrelationId", out var attr)
+            ? attr.StringValue
+            : null;
+        messageCorrelationId.Should().NotBeNullOrEmpty();
+        messageCorrelationId.Should().Be(correlationId);
+        
+        var @event = JsonSerializer.Deserialize<OrderCreatedEvent>(message.Body);
+        @event.Should().NotBeNull();
+        @event.OrderId.Should().Be(createdOrderResponse.Id);
     }
     
     [Fact]
     public async Task CreateOrder_ShouldReturnBadRequest_WhenCallWithInvalidModel()
     {
-        var request = new CreateOrderRequest("", -1);
+        var request = new CreateOrderRequestBuilder()
+            .WithEmptyProductName()
+            .WithNegativeQuantity()
+            .Build();
 
         var response = await _client.PostAsJsonAsync("/api/orders", request);
 
@@ -85,6 +122,7 @@ public class OrdersControllerTests : IAsyncLifetime
     [Fact]
     public async Task GetAll_ShouldReturnAllOrders()
     {
+        // Arrange
         const string order1ProductName = "product name 1";
         const int order1Quantity = 1;
         const string order2ProductName = "product name 2";
@@ -92,8 +130,10 @@ public class OrdersControllerTests : IAsyncLifetime
         var order1Id = await _orderDataHelper.InsertAsync(order1ProductName, order1Quantity);
         var order2Id = await _orderDataHelper.InsertAsync(order2ProductName, order2Quantity);
         
+        // Act
         var response = await _client.GetAsync("api/orders");
         
+        // Assert
         response.Should()
             .Be200Ok()
             .And.Satisfy<IEnumerable<OrderResponse>>(model => 
@@ -133,7 +173,10 @@ public class OrdersControllerTests : IAsyncLifetime
     public async Task UpdateOrder_ShouldReturnBadRequest_WhenCallWithInvalidModel()
     {
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-        var request = new CreateOrderRequest("", -1);
+        var request = new CreateOrderRequestBuilder()
+            .WithEmptyProductName()
+            .WithNegativeQuantity()
+            .Build();
         
         var response  = await _client.PutAsJsonAsync($"/api/orders/{orderId}", request);
         
@@ -147,7 +190,7 @@ public class OrdersControllerTests : IAsyncLifetime
     public async Task UpdateOrder_ShouldReturnNotFound_WhenCallWithNotExistingId()
     {
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-        var request = new CreateOrderRequest("ProductName", 1);
+        var request = new CreateOrderRequestBuilder().Build();
         
         var response  = await _client.PutAsJsonAsync($"/api/orders/{orderId}", request);
 
@@ -162,7 +205,10 @@ public class OrdersControllerTests : IAsyncLifetime
         
         var orderId = await _orderDataHelper.InsertAsync("productName", 1);
         
-        var request = new CreateOrderRequest(newProductName, newQuantity);
+        var request = new CreateOrderRequestBuilder()
+            .WithProductName(newProductName)
+            .WithQuantity(newQuantity)
+            .Build();
         
         var updateResponse = await _client.PutAsJsonAsync($"/api/orders/{orderId}", request);
 

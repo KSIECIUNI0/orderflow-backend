@@ -32,6 +32,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\OrderFlow.Api\OrderFlow.Api.csproj" />
+        <ProjectReference Include="..\OrderFlow.Testing\OrderFlow.Testing.csproj" />
     </ItemGroup>
 
 </Project>

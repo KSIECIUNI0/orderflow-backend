@@ -37,7 +37,7 @@ jobs:
           dotnet test tests/OrderFlow.Application.Tests/OrderFlow.Application.Tests.csproj --no-build --configuration Release
         
       - name: Run Integration Tests
-        run: dotnet test tests/OrderFlow.IntegrationTests/OrderFlow.IntegrationTests.csproj --no-build --configuration Release
+        run: dotnet test tests/OrderFlow.Api.IntegrationTests/OrderFlow.Api.IntegrationTests.csproj --no-build --configuration Release
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OrderFlow.Domain.Entities;
 using OrderFlow.Infrastructure;
 
-namespace OrderFlow.IntegrationTests.Helpers;
+namespace OrderFlow.Api.IntegrationTests.Helpers;
 
 public class OrderDataHelper
 {
