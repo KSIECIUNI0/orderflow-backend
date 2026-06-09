@@ -10,10 +10,18 @@ using WireMock.ResponseBuilders;
 namespace OrderFlow.Infrastructure.IntegrationTests.Alerts;
 
 [Collection("WireMock collection")]
-public class AlertServiceTests(WireMockFixture fixture)
+public class AlertServiceTests(WireMockFixture fixture) : IAsyncLifetime
 {
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
         { PropertyNameCaseInsensitive = true };
+    
+    public ValueTask InitializeAsync()
+    {
+        fixture.Server.ResetLogEntries();
+        return ValueTask.CompletedTask;
+    }
+
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
     [Fact]
     public async Task SendAsync_ShouldPostAlertRequest()
@@ -39,6 +47,7 @@ public class AlertServiceTests(WireMockFixture fixture)
         await sut.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
+        fixture.Server.LogEntries.Should().ContainSingle();
         var messageBody = fixture.Server.LogEntries.Single().RequestMessage?.Body;
 
         messageBody.Should().NotBeNullOrEmpty();
