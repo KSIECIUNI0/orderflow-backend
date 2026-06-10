@@ -1,6 +1,7 @@
 using WireMock.Server;
+using Xunit;
 
-namespace OrderFlow.Infrastructure.IntegrationTests.Fixtures;
+namespace OrderFlow.Testing.Fixtures;
 
 public class WireMockFixture : IAsyncLifetime
 {
@@ -18,13 +19,5 @@ public class WireMockFixture : IAsyncLifetime
         Server.Dispose();
         
         return ValueTask.CompletedTask;
-    }
-    
-    public HttpClient CreateClient()
-    {
-        return new HttpClient
-        {
-            BaseAddress = new Uri(Server.Url!)
-        };
     }
 }

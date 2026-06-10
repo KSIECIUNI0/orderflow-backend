@@ -5,27 +5,19 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using OrderFlow.Api.IntegrationTests.Helpers;
 using OrderFlow.Infrastructure;
 
 namespace OrderFlow.Api.IntegrationTests.Factories;
 
-public class OrderFlowApiFactory : WebApplicationFactory<Program>
+public class OrderFlowApiFactory(
+    string dbConnectionString,
+    string sqsUrl) : WebApplicationFactory<Program>
 {
-    private readonly string _dbConnectionString;
-    private readonly string _sqsUrl;
-
-    public OrderFlowApiFactory(
-        string dbConnectionString,
-        string sqsUrl)
+    public TDependency GetDependency<TDependency>()  where TDependency : class
     {
-        _dbConnectionString = dbConnectionString;
-        _sqsUrl = sqsUrl;
+        var scope = Services.CreateScope();
+        return scope.ServiceProvider.GetRequiredService<TDependency>();
     }
-
-    public OrderDataHelper OrderDataHelper => new(Services);
-    
-    public SqsHelper SqsHelper => new(Services);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -34,7 +26,7 @@ public class OrderFlowApiFactory : WebApplicationFactory<Program>
             services.RemoveAll(typeof(DbContextOptions<OrderFlowDbContext>));
             services.AddDbContext<OrderFlowDbContext>(options =>
             {
-                options.UseNpgsql(_dbConnectionString);
+                options.UseNpgsql(dbConnectionString);
             });
 
             services.RemoveAll(typeof(IAmazonSQS));
@@ -42,7 +34,7 @@ public class OrderFlowApiFactory : WebApplicationFactory<Program>
             {
                 var config = new AmazonSQSConfig
                 {
-                    ServiceURL = _sqsUrl,
+                    ServiceURL = sqsUrl,
                     UseHttp = true
                 };
                 return new AmazonSQSClient(

@@ -1,6 +1,7 @@
 using Testcontainers.PostgreSql;
+using Xunit;
 
-namespace OrderFlow.Api.IntegrationTests.Fixtures;
+namespace OrderFlow.Testing.Fixtures;
 
 public class PostgreSqlContainerFixture : IAsyncLifetime
 {

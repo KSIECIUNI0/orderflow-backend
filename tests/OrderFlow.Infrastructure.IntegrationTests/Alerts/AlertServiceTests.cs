@@ -2,24 +2,22 @@ using System.Text.Json;
 using FluentAssertions;
 using OrderFlow.Application.Alerts;
 using OrderFlow.Infrastructure.Alerts;
-using OrderFlow.Infrastructure.IntegrationTests.Fixtures;
 using OrderFlow.Testing.Builders.DTOs;
-using WireMock.RequestBuilders;
-using WireMock.ResponseBuilders;
+using OrderFlow.Testing.Drivers;
+using OrderFlow.Testing.Fixtures;
 
 namespace OrderFlow.Infrastructure.IntegrationTests.Alerts;
 
 [Collection("WireMock collection")]
 public class AlertServiceTests(WireMockFixture fixture) : IAsyncLifetime
 {
+    private const string AlertServicePath = "/alerts";
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
         { PropertyNameCaseInsensitive = true };
-    
-    public ValueTask InitializeAsync()
-    {
-        fixture.Server.ResetLogEntries();
-        return ValueTask.CompletedTask;
-    }
+
+    private readonly WireMockDriver _wireMockDriver = new(fixture.Server);
+
+    public ValueTask InitializeAsync() => _wireMockDriver.ResetLogEntries();
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
@@ -39,9 +37,9 @@ public class AlertServiceTests(WireMockFixture fixture) : IAsyncLifetime
             .WithError(error)
             .Build();
         
-        ConfigureSuccessfulResponse();
+        _wireMockDriver.ConfigureSuccessfulResponse(AlertServicePath);
         
-        var sut = new AlertService(fixture.CreateClient());
+        var sut = new AlertService(_wireMockDriver.CreateClient());
 
         // Act
         await sut.SendAsync(request, TestContext.Current.CancellationToken);
@@ -65,8 +63,8 @@ public class AlertServiceTests(WireMockFixture fixture) : IAsyncLifetime
     {
         // Arrange
         var request = new AlertRequestBuilder().Build();
-        ConfigureInternalServerError();
-        var sut = new AlertService(fixture.CreateClient());
+        _wireMockDriver.ConfigureInternalServerError(AlertServicePath);
+        var sut = new AlertService(_wireMockDriver.CreateClient());
         
         // Act
         var act = () => sut.SendAsync(request, TestContext.Current.CancellationToken);
@@ -74,29 +72,5 @@ public class AlertServiceTests(WireMockFixture fixture) : IAsyncLifetime
         // Assert
         await act.Should()
             .ThrowAsync<HttpRequestException>();
-    }
-    
-    private void ConfigureSuccessfulResponse()
-    {
-        fixture.Server
-            .Given(
-                Request.Create()
-                    .WithPath("/alerts")
-                    .UsingPost())
-            .RespondWith(
-                Response.Create()
-                    .WithStatusCode(200));
-    }
-    
-    private void ConfigureInternalServerError()
-    {
-        fixture.Server
-            .Given(
-                Request.Create()
-                    .WithPath("/alerts")
-                    .UsingPost())
-            .RespondWith(
-                Response.Create()
-                    .WithStatusCode(500));
     }
 }
