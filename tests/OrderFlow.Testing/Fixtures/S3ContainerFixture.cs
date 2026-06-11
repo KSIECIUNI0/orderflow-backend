@@ -26,7 +26,8 @@ public class S3ContainerFixture : IAsyncLifetime
             new AmazonS3Config
             {
                 ServiceURL = S3Url,
-                UseHttp = true
+                UseHttp = true,
+                ForcePathStyle = true
             });
     }
     
