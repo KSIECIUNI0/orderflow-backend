@@ -16,6 +16,8 @@ public class S3FailureStore(
 
     public async Task SaveFailedMessageAsync(FailedMessage message, CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(message, nameof(message));
+        
         var key = $"{_options.Prefix}/{message.QueueName}/{message.MessageId}.json";
         
         await s3.PutObjectAsync(new PutObjectRequest
