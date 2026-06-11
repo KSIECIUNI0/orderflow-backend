@@ -19,6 +19,8 @@ public class SqsEventBus(
         string? correlationId,
         CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(@event, nameof(@event));
+        
         var json = JsonSerializer.Serialize(@event);
 
         var request = new SendMessageRequest
