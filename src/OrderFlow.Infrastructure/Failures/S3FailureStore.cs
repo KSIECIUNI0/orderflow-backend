@@ -18,7 +18,7 @@ public class S3FailureStore(
     {
         ArgumentNullException.ThrowIfNull(message, nameof(message));
         
-        var key = $"{_options.Prefix}/{message.QueueName}/{message.MessageId}.json";
+        var key = $"{_options.Prefix}/{message.QueueIdentifier}/{message.MessageId}.json";
         
         await s3.PutObjectAsync(new PutObjectRequest
         {

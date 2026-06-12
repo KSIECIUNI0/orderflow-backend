@@ -7,6 +7,7 @@ public class QueueMessageBuilder
     private string _messageId = "message id";
     private string _body = "message body";
     private string _correlationId = "correlation id";
+    private string _queueUrl = "queue url";
     private const string ReceiptHandle = "receipt handle";
 
     public QueueMessageBuilder WithMessageId(string value)
@@ -26,6 +27,12 @@ public class QueueMessageBuilder
         _correlationId = value;
         return this;
     }
+
+    public QueueMessageBuilder WithQueueUrl(string value)
+    {
+        _queueUrl = value;
+        return this;
+    }
     
     public QueueMessage Build()
     {
@@ -34,7 +41,8 @@ public class QueueMessageBuilder
             MessageId = _messageId,
             Body = _body,
             CorrelationId = _correlationId,
-            ReceiptHandle = ReceiptHandle
+            ReceiptHandle = ReceiptHandle,
+            QueueUrl = _queueUrl
         };
     }
 }

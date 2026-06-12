@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FluentAssertions;
 using OrderFlow.Application.Failures;
+using OrderFlow.Application.Messaging;
 using OrderFlow.Infrastructure.Failures;
 using OrderFlow.Testing.Builders.DTOs;
 using OrderFlow.Testing.Builders.Options;
@@ -31,19 +32,19 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
     public async Task SaveFailedMessageAsync_ShouldPutFailedMessageInTheBucket()
     {
         // Arrange
-        const string queueName = "test-queue";
+        const string queueId = QueueIdentifiers.OrderCreated;
         const string messageId = "abc123";
         const string correlationId = "321bca";
         const string eventType = "fakeEventType";
         const string messageBody = "test message body";
-        const string expectedKey = $"{Prefix}/{queueName}/{messageId}.json";
+        const string expectedKey = $"{Prefix}/{queueId}/{messageId}.json";
         
         var options = new S3OptionsBuilder()
             .WithBucketName(_bucketName)
             .WithPrefix(Prefix)
             .Build();
         var failedMessage = new FailedMessageBuilder()
-            .WithQueueName(queueName)
+            .WithQueueIdentifier(queueId)
             .WithMessageId(messageId)
             .WithCorrelationId(correlationId)
             .WithEventType(eventType)
@@ -67,6 +68,6 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         bucketMessage.CorrelationId.Should().Be(correlationId);
         bucketMessage.EventType.Should().Be(eventType);
         bucketMessage.Body.Should().Be(messageBody);
-        bucketMessage.QueueName.Should().Be(queueName);
+        bucketMessage.QueueIdentifier.Should().Be(queueId);
     }
 }

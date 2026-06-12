@@ -4,7 +4,7 @@ using OrderFlow.Application.Alerts;
 using OrderFlow.Application.Failures;
 using OrderFlow.Application.Messaging;
 
-namespace OrderFlow.Application.Orders.Commands;
+namespace OrderFlow.Application.Dlq.Commands;
 
 public class ProcessDlqMessageHandler(
     IFailureStore failureStore,
@@ -31,8 +31,8 @@ public class ProcessDlqMessageHandler(
         var failedMessage = new FailedMessage
         {
             MessageId = command.QueueMessage.MessageId,
-            QueueName = command.QueueName,
-            EventType = command.EventType,
+            QueueIdentifier = command.Context.QueueIdentifier,
+            EventType = command.Context.EventType,
             CorrelationId = command.QueueMessage.CorrelationId,
             Body = command.QueueMessage.Body
         };

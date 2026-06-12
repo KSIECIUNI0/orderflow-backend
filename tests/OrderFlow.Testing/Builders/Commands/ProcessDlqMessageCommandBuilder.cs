@@ -1,5 +1,6 @@
+using OrderFlow.Application.Dlq;
+using OrderFlow.Application.Dlq.Commands;
 using OrderFlow.Application.Messaging;
-using OrderFlow.Application.Orders.Commands;
 using OrderFlow.Testing.Builders.DTOs;
 
 namespace OrderFlow.Testing.Builders.Commands;
@@ -7,8 +8,7 @@ namespace OrderFlow.Testing.Builders.Commands;
 public class ProcessDlqMessageCommandBuilder
 {
     private QueueMessage _queueMessage = new QueueMessageBuilder().Build();
-    private string _eventType = "event type";
-    private string _queueName = "queue name";
+    private DlqContext _context = new DlqContextBuilder().Build();
 
     public ProcessDlqMessageCommandBuilder WithQueueMessage(QueueMessage value)
     {
@@ -16,20 +16,11 @@ public class ProcessDlqMessageCommandBuilder
         return this;
     }
 
-    public ProcessDlqMessageCommandBuilder WithQueueName(string value)
+    public ProcessDlqMessageCommandBuilder WithDlqContext(DlqContext value)
     {
-        _queueName = value;
-        return this;
-    }
-
-    public ProcessDlqMessageCommandBuilder WithEventType(string value)
-    {
-        _eventType = value;
+        _context = value;
         return this;
     }
     
-    public ProcessDlqMessageCommand Build()
-    {
-        return new ProcessDlqMessageCommand(_queueMessage, _eventType, _queueName);
-    }
+    public ProcessDlqMessageCommand Build() => new(_queueMessage, _context);
 }

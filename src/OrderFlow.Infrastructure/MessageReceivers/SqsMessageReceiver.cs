@@ -27,21 +27,19 @@ public class SqsMessageReceiver(
             MessageAttributeNames = ["*"]
         }, cancellationToken);
 
-        return response?.Messages?.Select(ToQueueMessage).ToList() ?? [];
+        return response?.Messages?.Select(m => ToQueueMessage(m, queueUrl)).ToList() ?? [];
     }
 
-    public async Task DeleteAsync(
-        string queueUrl,
-        string receiptHandle,
+    public async Task CompleteAsync(
+        QueueMessage message,
         CancellationToken cancellationToken)
     {
-        ArgumentException.ThrowIfNullOrEmpty(queueUrl, nameof(queueUrl));
-        ArgumentException.ThrowIfNullOrEmpty(receiptHandle, nameof(receiptHandle));
+        ArgumentNullException.ThrowIfNull(message, nameof(message));
         
-        await sqs.DeleteMessageAsync(queueUrl, receiptHandle, cancellationToken);
+        await sqs.DeleteMessageAsync(message.QueueUrl, message.ReceiptHandle, cancellationToken);
     }
 
-    private static QueueMessage ToQueueMessage(Message message)
+    private static QueueMessage ToQueueMessage(Message message, string queueUrl)
     {
         var correlationId = message.MessageAttributes.TryGetValue("CorrelationId", out var attr)
             ? attr.StringValue
@@ -53,6 +51,7 @@ public class SqsMessageReceiver(
             Body = message.Body,
             MessageId = message.MessageId,
             ReceiptHandle = message.ReceiptHandle,
+            QueueUrl = queueUrl
         };
     }
 }

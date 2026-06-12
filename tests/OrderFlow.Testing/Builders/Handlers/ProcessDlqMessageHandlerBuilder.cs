@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using OrderFlow.Application.Alerts;
+using OrderFlow.Application.Dlq.Commands;
 using OrderFlow.Application.Failures;
-using OrderFlow.Application.Orders.Commands;
 
 namespace OrderFlow.Testing.Builders.Handlers;
 

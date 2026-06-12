@@ -5,7 +5,7 @@ namespace OrderFlow.Testing.Builders.DTOs;
 public class FailedMessageBuilder
 {
     private string _messageId = "fake message id";
-    private string _queueName = "fake queue name";
+    private string _queueIdentifier = "fake queue id";
     private string _correlationId = "fake correlation id";
     private string _eventType = "fake event type";
     private string _body = "fake body";
@@ -16,9 +16,9 @@ public class FailedMessageBuilder
         return this;
     }
 
-    public FailedMessageBuilder WithQueueName(string value)
+    public FailedMessageBuilder WithQueueIdentifier(string value)
     {
-        _queueName = value;
+        _queueIdentifier = value;
         return this;
     }
 
@@ -45,7 +45,7 @@ public class FailedMessageBuilder
         return new FailedMessage
         {
             MessageId = _messageId,
-            QueueName = _queueName,
+            QueueIdentifier = _queueIdentifier,
             CorrelationId = _correlationId,
             EventType = _eventType,
             Body = _body

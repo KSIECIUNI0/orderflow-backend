@@ -18,21 +18,14 @@ public class SqsMessageReceiverTests
             .WithParameterName("queueUrl");
     }
 
-    [Theory]
-    [InlineData(null, "receiptHandle", "queueUrl")]
-    [InlineData("", "receiptHandle", "queueUrl")]
-    [InlineData("queueUrl", null, "receiptHandle")]
-    [InlineData("queueUrl", "", "receiptHandle")]
-    public async Task DeleteAsync_ShouldThrowAnArgumentException_WhenParametersAreNullOrEmpty(
-        string? queueUrl,
-        string? receiptHandle,
-        string parameterName)
+    [Fact]
+    public async Task CompleteAsync_ShouldThrowAnArgumentNullException_WhenMessageIsNull()
     {
         var sut = new SqsMessageReceiverBuilder().Build();
 
-        var act = () => sut.DeleteAsync(queueUrl!, receiptHandle!, TestContext.Current.CancellationToken);
+        var act = () => sut.CompleteAsync(null!, TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<ArgumentException>()
-            .WithParameterName(parameterName);
+            .WithParameterName("message");
     }
 }

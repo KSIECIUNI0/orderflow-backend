@@ -4,12 +4,13 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using OrderFlow.Application.Alerts;
 using OrderFlow.Application.Failures;
+using OrderFlow.Application.Messaging;
 using OrderFlow.Testing.Builders.Commands;
 using OrderFlow.Testing.Builders.DTOs;
 using OrderFlow.Testing.Builders.Handlers;
 using OrderFlow.Testing.Fakes;
 
-namespace OrderFlow.Application.Tests.Orders.Commands;
+namespace OrderFlow.Application.Tests.Dlq.Commands;
 
 public class ProcessDlqMessageHandlerTests
 {
@@ -19,7 +20,6 @@ public class ProcessDlqMessageHandlerTests
         // Arrange
         var messageId = Guid.NewGuid().ToString();
         var correlationId = Guid.NewGuid().ToString();
-        const string queueName = "FakeQueueName";
         const string eventType = "FakeEventType";
         const string body = "FakeBody";
         var queueMessage = new QueueMessageBuilder()
@@ -27,10 +27,13 @@ public class ProcessDlqMessageHandlerTests
             .WithCorrelationId(correlationId)
             .WithBody(body)
             .Build();
+        var dlqContext = new DlqContextBuilder()
+            .WithEventType(eventType)
+            .WithQueueIdentifier(QueueIdentifiers.OrderCreated)
+            .Build();
         var command = new ProcessDlqMessageCommandBuilder()
             .WithQueueMessage(queueMessage)
-            .WithQueueName(queueName)
-            .WithEventType(eventType)
+            .WithDlqContext(dlqContext)
             .Build();
         var builder = new ProcessDlqMessageHandlerBuilder();
         var failureStore = builder.FreezeFailureStore();
@@ -62,7 +65,7 @@ public class ProcessDlqMessageHandlerTests
             .SaveFailedMessageAsync(
                 Arg.Is<FailedMessage>(message =>
                     message.MessageId == messageId &&
-                    message.QueueName == queueName &&
+                    message.QueueIdentifier == QueueIdentifiers.OrderCreated &&
                     message.EventType == eventType &&
                     message.CorrelationId == correlationId &&
                     message.Body == body),

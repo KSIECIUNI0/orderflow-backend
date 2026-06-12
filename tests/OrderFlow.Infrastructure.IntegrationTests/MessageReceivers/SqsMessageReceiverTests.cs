@@ -54,6 +54,7 @@ public class SqsMessageReceiverTests(SqsContainerFixture fixture) : IAsyncLifeti
         message.Body.Should().Be(JsonSerializer.Serialize(@event));
         message.MessageId.Should().Be(messageId);
         message.ReceiptHandle.Should().NotBeNullOrEmpty();
+        message.QueueUrl.Should().Be(_queueUrl);
     }
 
     [Fact]
@@ -71,7 +72,7 @@ public class SqsMessageReceiverTests(SqsContainerFixture fixture) : IAsyncLifeti
     }
     
     [Fact]
-    public async Task DeleteAsync_ShouldDeleteMessage()
+    public async Task CompleteAsync_ShouldCompleteMessageAndDeleteItFromQueue()
     {
         // Arrange
         const string correlationId = "abcd1234";
@@ -89,7 +90,7 @@ public class SqsMessageReceiverTests(SqsContainerFixture fixture) : IAsyncLifeti
             .HaveCount(1);
         var receivedMessage = receivedMessages.Single();
         
-        await sut.DeleteAsync(_queueUrl, receivedMessage.ReceiptHandle, TestContext.Current.CancellationToken);
+        await sut.CompleteAsync(receivedMessage, TestContext.Current.CancellationToken);
         
         // Assert
         var receivedMessagesAfterDelete = await sut.ReceiveAsync(_queueUrl, TestContext.Current.CancellationToken);
