@@ -1,5 +1,5 @@
 using FluentAssertions;
-using OrderFlow.Testing.Builders.EventBus;
+using OrderFlow.Testing.Builders.Messaging;
 
 namespace OrderFlow.Infrastructure.Tests.EventBus;
 

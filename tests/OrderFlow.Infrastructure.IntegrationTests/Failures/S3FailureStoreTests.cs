@@ -1,10 +1,9 @@
 using System.Text.Json;
 using FluentAssertions;
-using Microsoft.Extensions.Options;
 using OrderFlow.Application.Failures;
-using OrderFlow.Infrastructure.Configurations;
 using OrderFlow.Infrastructure.Failures;
 using OrderFlow.Testing.Builders.DTOs;
+using OrderFlow.Testing.Builders.Options;
 using OrderFlow.Testing.Drivers;
 using OrderFlow.Testing.Fixtures;
 
@@ -37,9 +36,12 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         const string correlationId = "321bca";
         const string eventType = "fakeEventType";
         const string messageBody = "test message body";
+        const string expectedKey = $"{Prefix}/{queueName}/{messageId}.json";
         
-        var expectedKey = $"{Prefix}/{queueName}/{messageId}.json";
-        var options = new S3Options { BucketName = _bucketName, Prefix = Prefix };
+        var options = new S3OptionsBuilder()
+            .WithBucketName(_bucketName)
+            .WithPrefix(Prefix)
+            .Build();
         var failedMessage = new FailedMessageBuilder()
             .WithQueueName(queueName)
             .WithMessageId(messageId)
@@ -47,7 +49,7 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
             .WithEventType(eventType)
             .WithBody(messageBody)
             .Build();
-        var sut = new S3FailureStore(_driver.S3Client, Options.Create(options));
+        var sut = new S3FailureStore(_driver.S3Client, options);
         
         // Act
         await sut.SaveFailedMessageAsync(failedMessage, TestContext.Current.CancellationToken);

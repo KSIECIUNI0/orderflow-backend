@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Amazon.SQS;
 using Amazon.SQS.Model;
 
@@ -49,5 +50,37 @@ public class SqsDriver(IAmazonSQS sqs)
                     cancellationToken);
             }
         }
+    }
+    
+    public async Task<string> SendMessageAsync<TMessage>(
+        TMessage message,
+        string queueUrl,
+        string? correlationId,
+        CancellationToken cancellationToken = default)
+    where TMessage : class
+    {
+        var request = new SendMessageRequest
+        {
+            QueueUrl = queueUrl,
+            MessageBody = JsonSerializer.Serialize(message)
+        };
+
+        if (!string.IsNullOrEmpty(correlationId))
+        {
+            request.MessageAttributes = new Dictionary<string, MessageAttributeValue>
+            {
+                {
+                    "CorrelationId",
+                    new MessageAttributeValue
+                    {
+                        StringValue = correlationId,
+                        DataType = "String"
+                    }
+                }
+            };
+        }
+
+        var response = await sqs.SendMessageAsync(request, cancellationToken);
+        return response.MessageId;
     }
 }

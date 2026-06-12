@@ -21,24 +21,26 @@ public class SqsEventBus(
     {
         ArgumentNullException.ThrowIfNull(@event, nameof(@event));
         
-        var json = JsonSerializer.Serialize(@event);
-
         var request = new SendMessageRequest
         {
             QueueUrl = _options.Url,
-            MessageBody = json,
-            MessageAttributes = new Dictionary<string, MessageAttributeValue>
+            MessageBody = JsonSerializer.Serialize(@event)
+        };
+
+        if (!string.IsNullOrEmpty(correlationId))
+        {
+            request.MessageAttributes = new Dictionary<string, MessageAttributeValue>
             {
                 {
-                    "CorrelationId", 
+                    "CorrelationId",
                     new MessageAttributeValue
                     {
                         StringValue = correlationId,
                         DataType = "String"
                     }
                 }
-            }
-        };
+            };
+        }
 
         await sqs.SendMessageAsync(request, cancellationToken);
     }
