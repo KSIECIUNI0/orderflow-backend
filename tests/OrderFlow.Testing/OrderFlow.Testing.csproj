@@ -10,6 +10,7 @@
       <ProjectReference Include="..\..\src\OrderFlow.Application\OrderFlow.Application.csproj" />
       <ProjectReference Include="..\..\src\OrderFlow.Domain\OrderFlow.Domain.csproj" />
       <ProjectReference Include="..\..\src\OrderFlow.Infrastructure\OrderFlow.Infrastructure.csproj" />
+      <ProjectReference Include="..\..\src\OrderFlow.Worker\OrderFlow.Worker.csproj" />
     </ItemGroup>
 
     <ItemGroup>

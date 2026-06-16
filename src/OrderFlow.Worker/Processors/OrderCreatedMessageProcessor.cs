@@ -24,6 +24,7 @@ public class OrderCreatedMessageProcessor(
                 logger.LogInformation("Received message: {Body}", message.Body);
                 var @event = JsonSerializer.Deserialize<OrderCreatedEvent>(message.Body);
                 ArgumentNullException.ThrowIfNull(@event, nameof(@event));
+                @event.Validate();
 
                 logger.LogInformation("OrderCreatedEvent received for {OrderId}", @event.OrderId);
                 

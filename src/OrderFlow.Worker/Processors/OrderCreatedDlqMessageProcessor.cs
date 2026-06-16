@@ -23,7 +23,7 @@ public class OrderCreatedDlqMessageProcessor(
             {
                 logger.LogTrace("DLQ received message: {MessageId} - {Body}", message.MessageId, message.Body);
 
-                var context = new DlqContext(nameof(OrderCreatedEvent), QueueIdentifiers.OrderCreated);
+                var context = new DlqContext( QueueIdentifiers.OrderCreated, nameof(OrderCreatedEvent));
                 var command = new ProcessDlqMessageCommand(message, context);
                 await mediator.Send(command, stoppingToken);
 

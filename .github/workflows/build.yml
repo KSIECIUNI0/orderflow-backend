@@ -36,6 +36,7 @@ jobs:
           dotnet test tests/OrderFlow.Domain.Tests/OrderFlow.Domain.Tests.csproj --no-build --configuration Release
           dotnet test tests/OrderFlow.Application.Tests/OrderFlow.Application.Tests.csproj --no-build --configuration Release
           dotnet test tests/OrderFlow.Infrastructure.Tests/OrderFlow.Infrastructure.Tests.csproj --no-build --configuration Release
+          dotnet test tests/OrderFlow.Worker.Tests/OrderFlow.Worker.Tests.csproj --no-build --configuration Release
         
       - name: Run Integration Tests
         run: |
