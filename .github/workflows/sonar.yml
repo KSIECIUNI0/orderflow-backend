@@ -41,6 +41,7 @@ jobs:
             --results-directory TestResults
           dotnet test tests/OrderFlow.Worker.Tests \
             --collect:"XPlat Code Coverage" \
+            /p:ExcludeByFile="**/Program.cs" \
             --results-directory TestResults
           dotnet test tests/OrderFlow.Api.IntegrationTests \
             --collect:"XPlat Code Coverage" \
