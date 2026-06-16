@@ -29,5 +29,11 @@
       <ProjectReference Include="..\..\src\OrderFlow.Worker\OrderFlow.Worker.csproj" />
       <ProjectReference Include="..\OrderFlow.Testing\OrderFlow.Testing.csproj" />
     </ItemGroup>
+    
+    <PropertyGroup>
+        <ExcludeByFile>
+            **/Program.cs
+        </ExcludeByFile>
+    </PropertyGroup>
 
 </Project>
