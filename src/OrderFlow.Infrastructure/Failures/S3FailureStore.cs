@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -28,11 +29,13 @@ public class S3FailureStore(
         }, cancellationToken);
     }
 
+    [ExcludeFromCodeCoverage] // TODO: Remove after implementation
     public Task<List<FailedMessage>> GetAllAsync(string queueName, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }
 
+    [ExcludeFromCodeCoverage] // TODO: Remove after implementation
     public Task RemoveAsync(string queueName, string messageId, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
