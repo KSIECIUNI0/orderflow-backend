@@ -1,0 +1,11 @@
+@host = http://localhost:8085
+
+### Send Alert
+POST {{host}}/alerts/
+Content-Type: application/json
+
+{
+  "type": "TEST ALERT",
+  "messageId": "84d97576-c00d-4852-9467-b9c3514e7e47",
+  "error": "MOCK EXCEPTION"
+}

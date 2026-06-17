@@ -1,18 +1,46 @@
 services:
   localstack:
     image: localstack/localstack:latest
+    container_name: orderflow-localstack
     ports:
       - "4566:4566"
     environment:
       - SERVICES=s3, sqs
-      - DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID='test'
+      - AWS_SECRET_KEY='test'
+      - AWS_SECRET_ACCESS_KEY='test'
       - DEBUG=1
+      - LS_LOG=trace
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    healthcheck:
+      test: [ "CMD", "aws", "--endpoint-url=http://localhost:4566", "sqs", "list-queues" ]
+      interval: 5s
+      timeout: 2s
+      retries: 10
     volumes:
       - "./localstack:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./localstack-init:/etc/localstack/init/ready.d"
+      
+  worker:
+    build:
+      context: ../src
+      dockerfile: OrderFlow.Worker/Dockerfile
+    container_name: orderflow-worker
+    depends_on:
+      localstack:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      AWS__ServiceUrl: "http://localstack:4566"
+      AWS__Region: "us-east-1"
+      Sqs__OrderCreatedQueueUrl: "http://localstack:4566/000000000000/order-created-queue"
+    restart: unless-stopped
         
   postgres:
     image: postgres:16
+    container_name: orderflow-database
     ports:
       - "5432:5432"
     environment:
@@ -21,3 +49,22 @@ services:
       POSTGRES_DB: orderflow
     volumes:
       - "./pgdata:/var/lib/postgresql/data"
+        
+  seq:
+    image: datalust/seq:latest
+    container_name: orderflow-seq
+    ports:
+      - "5341:80"
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_NOAUTHENTICATION=true
+    volumes:
+      - ./seq-data:/data
+        
+  alert-service:
+    build:
+      context: ../src
+      dockerfile: OrderFlow.AlertService/Dockerfile
+    container_name: orderflow-alertservice
+    ports:
+      - "8085:8080"

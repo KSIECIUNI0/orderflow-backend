@@ -2,12 +2,13 @@ name: SonarCloud Analysis
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [develop, main]
   pull_request:
-    branches: [ main, develop ]
+    branches: [develop, main]
 
 jobs:
-  sonarcloud:
+  build:
+    name: Build and Analyze
     runs-on: ubuntu-latest
 
     steps:
@@ -21,30 +22,55 @@ jobs:
         with:
           dotnet-version: '9.0.x'
 
-      - name: Restore
+      - name: Restore dependencies
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --no-incremental
+        run: dotnet build --no-restore
 
       - name: Run tests with coverage
         run: |
-          dotnet test tests/OrderFlow.UnitTests \
+          dotnet test tests/OrderFlow.Application.Tests \
             --collect:"XPlat Code Coverage" \
-            --results-directory tests/OrderFlow.UnitTests/TestResults
+            --results-directory TestResults
+          dotnet test tests/OrderFlow.Domain.Tests \
+            --collect:"XPlat Code Coverage" \
+            --results-directory TestResults
+          dotnet test tests/OrderFlow.Infrastructure.Tests \
+            --collect:"XPlat Code Coverage" \
+            --results-directory TestResults
+          dotnet test tests/OrderFlow.Worker.Tests \
+            --collect:"XPlat Code Coverage" \
+            --results-directory TestResults
+          dotnet test tests/OrderFlow.Api.IntegrationTests \
+            --collect:"XPlat Code Coverage" \
+            --results-directory TestResults
+          dotnet test tests/OrderFlow.Infrastructure.IntegrationTests \
+            --collect:"XPlat Code Coverage" \
+            --results-directory TestResults
 
-      - name: Convert coverage to Cobertura
-        run: |
-          report=$(find tests/OrderFlow.UnitTests/TestResults -name "coverage.cobertura.xml" -type f | head -n 1)
-          echo "REPORT_PATH=$report" >> $GITHUB_ENV
+      - name: Install ReportGenerator
+        run: dotnet tool install --global dotnet-reportgenerator-globaltool
+
+      - name: Convert coverage reports
+        run: reportgenerator \
+          -reports:TestResults/**/coverage.cobertura.xml \
+          -targetdir:TestResults/report \
+          -reporttypes:SonarQube \
+          -sourcedirs:$(pwd)/src \
+          -filefilters:-src/OrderFlow.Infrastructure/Migrations/*
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@0303d6b62e310685c0e34d0b9cde218036885c4d
-        with:
-          args: >
-            -Dsonar.projectKey=KSIECIUNI0_orderflow-backend
-            -Dsonar.organization=ksieciuni0
-            -Dsonar.host.url=https://sonarcloud.io
-            -Dsonar.cs.opencover.reportsPaths=${{ env.REPORT_PATH }}
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ vars.SONAR_ORGANIZATION }}
+            -Dsonar.host.url=https://sonarcloud.io
+            -Dsonar.coverageReportPaths=TestResults/report/SonarQube.xml
+            -Dsonar.sources=src
+            -Dsonar.projectBaseDir=.
+            -Dsonar.exclusions=**/.github/**,**/Dockerfile,**/Migrations/**,**/Program.cs
