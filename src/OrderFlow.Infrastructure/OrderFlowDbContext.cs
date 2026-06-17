@@ -3,11 +3,8 @@ using OrderFlow.Domain.Entities;
 
 namespace OrderFlow.Infrastructure;
 
-public class OrderFlowDbContext : DbContext
+public class OrderFlowDbContext(DbContextOptions<OrderFlowDbContext> options) : DbContext(options)
 {
-    public OrderFlowDbContext(DbContextOptions<OrderFlowDbContext> options)
-        : base(options) {}
-    
     public DbSet<Order> Orders => Set<Order>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

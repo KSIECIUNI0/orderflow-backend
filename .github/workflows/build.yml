@@ -31,8 +31,17 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore
         
-      - name: Run Tests (Unit + Integration)
-        run: dotnet test --no-build --configuration Release
+      - name: Run Unit Tests
+        run: |
+          dotnet test tests/OrderFlow.Domain.Tests/OrderFlow.Domain.Tests.csproj --no-build --configuration Release
+          dotnet test tests/OrderFlow.Application.Tests/OrderFlow.Application.Tests.csproj --no-build --configuration Release
+          dotnet test tests/OrderFlow.Infrastructure.Tests/OrderFlow.Infrastructure.Tests.csproj --no-build --configuration Release
+          dotnet test tests/OrderFlow.Worker.Tests/OrderFlow.Worker.Tests.csproj --no-build --configuration Release
+        
+      - name: Run Integration Tests
+        run: |
+          dotnet test tests/OrderFlow.Api.IntegrationTests/OrderFlow.Api.IntegrationTests.csproj --no-build --configuration Release
+          dotnet test tests/OrderFlow.Infrastructure.IntegrationTests/OrderFlow.Infrastructure.IntegrationTests.csproj --no-build --configuration Release
         
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

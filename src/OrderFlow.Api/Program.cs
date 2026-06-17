@@ -1,35 +1,28 @@
-using FluentValidation;
-using Microsoft.EntityFrameworkCore;
+using OrderFlow.Api;
 using OrderFlow.Api.Middleware;
-using OrderFlow.Application.Orders;
-using OrderFlow.Application.Orders.Commands;
-using OrderFlow.Application.Orders.Validators;
-using OrderFlow.Domain.Abstractions;
+using OrderFlow.Application;
 using OrderFlow.Infrastructure;
-using OrderFlow.Infrastructure.Orders;
-using OrderFlow.Infrastructure.Persistence;
-using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddOpenApi();
-builder.Services.AddDbContext<OrderFlowDbContext>(options =>
-{
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-});
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<CreateOrderCommandHandler>());
-builder.Services.AddValidatorsFromAssemblyContaining<CreateOrderRequestValidator>();
-builder.Services.AddFluentValidationAutoValidation(options =>
-{
-    options.DisableBuiltInModelValidation = true;
-});
+var config = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+    .Build();
 
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+var logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(config)
+    .Enrich.FromLogContext()
+    .CreateLogger();
 
-builder.Services.AddTransient<ExceptionHandlingMiddleware>();
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(logger);
 
-builder.Services.AddControllers();
+builder.Services
+    .AddApplication()
+    .AddInfrastructure(builder.Configuration)
+    .AddApi();
 
 var app = builder.Build();
 
@@ -40,6 +33,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<CorrelationIdMiddleware>();
 app.MapControllers();
 
 await app.RunAsync();

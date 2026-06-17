@@ -2,17 +2,10 @@ using OrderFlow.Domain.Abstractions;
 
 namespace OrderFlow.Infrastructure.Persistence;
 
-public class UnitOfWork : IUnitOfWork
+public class UnitOfWork(OrderFlowDbContext orderFlowDbContext) : IUnitOfWork
 {
-    private readonly OrderFlowDbContext _orderFlowDbContext;
-
-    public UnitOfWork(OrderFlowDbContext orderFlowDbContext)
-    {
-        _orderFlowDbContext = orderFlowDbContext;
-    }
-
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        return await _orderFlowDbContext.SaveChangesAsync(cancellationToken);
+        return await orderFlowDbContext.SaveChangesAsync(cancellationToken);
     }
 }
