@@ -1,5 +1,5 @@
 using FluentAssertions;
-using OrderFlow.Testing.Builders.Stores;
+using OrderFlow.Infrastructure.TestUtils.Builders.Stores;
 
 namespace OrderFlow.Infrastructure.Tests.Failures;
 

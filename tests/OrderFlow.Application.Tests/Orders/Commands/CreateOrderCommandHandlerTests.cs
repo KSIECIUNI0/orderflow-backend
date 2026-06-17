@@ -1,10 +1,9 @@
 using FluentAssertions;
 using NSubstitute;
+using OrderFlow.Application.TestUtils.Builders.Commands;
+using OrderFlow.Application.TestUtils.Builders.Handlers;
 using OrderFlow.Domain.Entities;
-using OrderFlow.Testing.Builders;
-using OrderFlow.Testing.Builders.Commands;
-using OrderFlow.Testing.Builders.Entities;
-using OrderFlow.Testing.Builders.Handlers;
+using OrderFlow.Domain.TestUtils.Builders.Entities;
 
 namespace OrderFlow.Application.Tests.Orders.Commands;
 

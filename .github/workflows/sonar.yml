@@ -41,7 +41,6 @@ jobs:
             --results-directory TestResults
           dotnet test tests/OrderFlow.Worker.Tests \
             --collect:"XPlat Code Coverage" \
-            /p:ExcludeByFile="**/Program.cs" \
             --results-directory TestResults
           dotnet test tests/OrderFlow.Api.IntegrationTests \
             --collect:"XPlat Code Coverage" \
@@ -74,4 +73,4 @@ jobs:
             -Dsonar.coverageReportPaths=TestResults/report/SonarQube.xml
             -Dsonar.sources=src
             -Dsonar.projectBaseDir=.
-            -Dsonar.exclusions=**/.github/**,**/Dockerfile,**/Migrations/**
+            -Dsonar.exclusions=**/.github/**,**/Dockerfile,**/Migrations/**,**/Program.cs

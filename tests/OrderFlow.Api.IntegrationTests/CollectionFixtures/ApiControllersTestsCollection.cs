@@ -1,4 +1,4 @@
-using OrderFlow.Testing.Fixtures;
+using OrderFlow.TestCore.Fixtures;
 
 namespace OrderFlow.Api.IntegrationTests.CollectionFixtures;
 

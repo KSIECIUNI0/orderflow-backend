@@ -1,10 +1,10 @@
 using System.Text.Json;
 using FluentAssertions;
 using OrderFlow.Application.Alerts;
+using OrderFlow.Application.TestUtils.Builders.Alerts;
 using OrderFlow.Infrastructure.Alerts;
-using OrderFlow.Testing.Builders.DTOs;
-using OrderFlow.Testing.Drivers;
-using OrderFlow.Testing.Fixtures;
+using OrderFlow.TestCore.Drivers;
+using OrderFlow.TestCore.Fixtures;
 
 namespace OrderFlow.Infrastructure.IntegrationTests.Alerts;
 

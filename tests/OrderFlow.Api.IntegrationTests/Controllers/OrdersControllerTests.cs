@@ -2,13 +2,14 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using Amazon.SQS;
 using FluentAssertions;
-using OrderFlow.Api.IntegrationTests.Factories;
+using OrderFlow.Api.TestUtils.Factories;
 using OrderFlow.Application.Orders.DTOs;
 using OrderFlow.Application.Orders.Events;
+using OrderFlow.Application.TestUtils.Builders.DTOs;
 using OrderFlow.Infrastructure;
-using OrderFlow.Testing.Builders.DTOs;
-using OrderFlow.Testing.Drivers;
-using OrderFlow.Testing.Fixtures;
+using OrderFlow.Infrastructure.TestUtils.Drivers;
+using OrderFlow.TestCore.Drivers;
+using OrderFlow.TestCore.Fixtures;
 
 namespace OrderFlow.Api.IntegrationTests.Controllers;
 

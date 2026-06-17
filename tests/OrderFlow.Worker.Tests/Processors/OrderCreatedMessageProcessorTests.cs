@@ -6,9 +6,9 @@ using NSubstitute.ExceptionExtensions;
 using OrderFlow.Application.Messaging;
 using OrderFlow.Application.Orders.Commands;
 using OrderFlow.Application.Orders.Events;
-using OrderFlow.Testing.Builders.DTOs;
-using OrderFlow.Testing.Builders.Processors;
-using OrderFlow.Testing.Fakes;
+using OrderFlow.Application.TestUtils.Builders.Messaging;
+using OrderFlow.TestCore.Fakes;
+using OrderFlow.Worker.TestUtils.Builders.Processors;
 
 namespace OrderFlow.Worker.Tests.Processors;
 

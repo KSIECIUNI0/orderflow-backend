@@ -1,5 +1,5 @@
 using FluentAssertions;
-using OrderFlow.Testing.Builders.Messaging;
+using OrderFlow.Infrastructure.TestUtils.Builders.Messaging;
 
 namespace OrderFlow.Infrastructure.Tests.MessageReceivers;
 

@@ -1,6 +1,6 @@
 using FluentValidation.TestHelper;
 using OrderFlow.Application.Orders.Validators;
-using OrderFlow.Testing.Builders.DTOs;
+using OrderFlow.Application.TestUtils.Builders.DTOs;
 
 namespace OrderFlow.Application.Tests.Orders.Validators;
 

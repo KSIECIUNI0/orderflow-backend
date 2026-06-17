@@ -26,7 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\OrderFlow.Testing\OrderFlow.Testing.csproj" />
+      <ProjectReference Include="..\OrderFlow.Domain.TestUtils\OrderFlow.Domain.TestUtils.csproj" />
     </ItemGroup>
 
 </Project>

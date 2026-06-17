@@ -3,8 +3,8 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using OrderFlow.Application.Orders.DTOs;
 using OrderFlow.Application.Orders.Queries;
-using OrderFlow.Testing.Builders.Entities;
-using OrderFlow.Testing.Builders.Handlers;
+using OrderFlow.Application.TestUtils.Builders.Handlers;
+using OrderFlow.Domain.TestUtils.Builders.Entities;
 
 namespace OrderFlow.Application.Tests.Orders.Queries;
 

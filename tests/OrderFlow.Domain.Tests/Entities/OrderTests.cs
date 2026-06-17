@@ -1,6 +1,5 @@
 using FluentAssertions;
-using OrderFlow.Testing.Builders;
-using OrderFlow.Testing.Builders.Entities;
+using OrderFlow.Domain.TestUtils.Builders.Entities;
 
 namespace OrderFlow.Domain.Tests.Entities;
 

@@ -5,10 +5,11 @@ using NSubstitute.ExceptionExtensions;
 using OrderFlow.Application.Alerts;
 using OrderFlow.Application.Failures;
 using OrderFlow.Application.Messaging;
-using OrderFlow.Testing.Builders.Commands;
-using OrderFlow.Testing.Builders.DTOs;
-using OrderFlow.Testing.Builders.Handlers;
-using OrderFlow.Testing.Fakes;
+using OrderFlow.Application.TestUtils.Builders.Commands;
+using OrderFlow.Application.TestUtils.Builders.Dlq;
+using OrderFlow.Application.TestUtils.Builders.Handlers;
+using OrderFlow.Application.TestUtils.Builders.Messaging;
+using OrderFlow.TestCore.Fakes;
 
 namespace OrderFlow.Application.Tests.Dlq.Commands;
 

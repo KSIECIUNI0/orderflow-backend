@@ -26,14 +26,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\src\OrderFlow.Worker\OrderFlow.Worker.csproj" />
-      <ProjectReference Include="..\OrderFlow.Testing\OrderFlow.Testing.csproj" />
+      <ProjectReference Include="..\OrderFlow.Application.TestUtils\OrderFlow.Application.TestUtils.csproj" />
+      <ProjectReference Include="..\OrderFlow.Worker.TestUtils\OrderFlow.Worker.TestUtils.csproj" />
     </ItemGroup>
-    
-    <PropertyGroup>
-        <ExcludeByFile>
-            **/Program.cs
-        </ExcludeByFile>
-    </PropertyGroup>
 
 </Project>

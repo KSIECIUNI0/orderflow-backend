@@ -1,0 +1,46 @@
+using OrderFlow.Application.Orders.DTOs;
+
+namespace OrderFlow.Application.TestUtils.Builders.DTOs;
+
+public class CreateOrderRequestBuilder
+{
+    private const int MaxProductNameLength = 100;
+    private const string ValidProductName = "Laptop";
+
+    private string _productName = ValidProductName;
+    private int _quantity = 1;
+    
+    private static string TooLongProductName() => new('x', MaxProductNameLength + 1000);
+    
+    public CreateOrderRequestBuilder WithProductName(string value)
+    {
+        _productName = value;
+        return this;
+    }
+    
+    public CreateOrderRequestBuilder WithTooLongProductName()
+    {
+        _productName = TooLongProductName();
+        return this;
+    }
+    
+    public CreateOrderRequestBuilder WithEmptyProductName()
+    {
+        _productName = string.Empty;
+        return this;
+    }
+    
+    public CreateOrderRequestBuilder WithQuantity(int value)
+    {
+        _quantity = value;
+        return this;
+    }
+    
+    public CreateOrderRequestBuilder WithNegativeQuantity()
+    {
+        _quantity = -100;
+        return this;
+    }
+    
+    public CreateOrderRequest Build() => new(_productName, _quantity);
+}

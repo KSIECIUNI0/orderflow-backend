@@ -2,9 +2,9 @@ using FluentAssertions;
 using OrderFlow.Application.Orders.Events;
 using OrderFlow.Infrastructure.EventBus;
 using System.Text.Json;
-using OrderFlow.Testing.Builders.Options;
-using OrderFlow.Testing.Drivers;
-using OrderFlow.Testing.Fixtures;
+using OrderFlow.Infrastructure.TestUtils.Builders.Options;
+using OrderFlow.TestCore.Drivers;
+using OrderFlow.TestCore.Fixtures;
 
 namespace OrderFlow.Infrastructure.IntegrationTests.EventBus;
 

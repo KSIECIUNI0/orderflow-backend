@@ -1,10 +1,10 @@
 using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using OrderFlow.Application.TestUtils.Builders.Handlers;
+using OrderFlow.Application.TestUtils.Builders.Queries;
 using OrderFlow.Domain.Entities;
-using OrderFlow.Testing.Builders.Entities;
-using OrderFlow.Testing.Builders.Handlers;
-using OrderFlow.Testing.Builders.Queries;
+using OrderFlow.Domain.TestUtils.Builders.Entities;
 
 namespace OrderFlow.Application.Tests.Orders.Queries;
 
