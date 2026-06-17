@@ -54,6 +54,34 @@ public class HttpCorrelationIdAccessorTests
     }
 
     [Fact]
+    public void CorrelationId_ShouldReturnNull_WhenHttpContextDoesNotHaveValueForCorrelationIdHeader()
+    {
+        // Arrange
+        var builder = new HttpCorrelationIdAccessorBuilder();
+        var httpContextAccessor = builder.FreezeHttpContextAccessor();
+
+        var fakeHttpContext = new FakeHttpContext
+        {
+            Items = new Dictionary<object, object?>
+            {
+                { "X-Correlation-Id", null }
+            }
+        };
+
+        httpContextAccessor
+            .HttpContext
+            .Returns(fakeHttpContext);
+        
+        var sut = builder.Build();
+        
+        // Act
+        var result = sut.CorrelationId;
+        
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public void CorrelationId_ShouldReturnCorrelationId()
     {
         // Arrange
