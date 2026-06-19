@@ -193,7 +193,7 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task GetPageAsync_FailedMessagePageShouldContainValidPageItem()
+    public async Task GetPageAsync_ShouldReturnValidPageItem()
     {
         // Arrange
         const int pageSize = 10;
@@ -298,6 +298,39 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         logs.Select(log => log.Exception).Should().AllSatisfy(ex => ex.Should().BeOfType<JsonException>());
     }
 
+    [Fact]
+    public async Task GetPageAsync_ShouldReturnEmptyPage_WhenAllFilesAreEmpty()
+    {
+        // Arrange
+        const int pageSize = 10;
+        const int maxPageSize = 10;
+        const int numberOfEmptyMessages = 5;
+        const string queueId = QueueIdentifiers.OrderCreated;
+        var logger = new FakeLogger<S3FailureStore>();
+        var options = new S3FailureStoreOptionsBuilder()
+            .WithBucketName(_bucketName)
+            .WithPrefix(Prefix)
+            .WithMaxPageSize(maxPageSize)
+            .Build();
+        var sut = new S3FailureStore(_driver.S3Client, options, logger);
+
+        var emptyFiles = GenerateEmptyFilesToUpload(numberOfEmptyMessages, queueId);
+        await _driver.PutObjectsAsync(_bucketName, emptyFiles, TestContext.Current.CancellationToken);
+        
+        // Act
+        var act = () => sut.GetPageAsync(pageSize, null, TestContext.Current.CancellationToken);
+        
+        // Assert
+        var result = (await act.Should().NotThrowAsync()).Which;
+        result.Should().NotBeNull();
+        result.Items.Should().BeEmpty();
+
+        var logs = logger.Collector.GetSnapshot();
+        logs
+            .Select(log => log.Level == LogLevel.Warning)
+            .Should().BeEmpty();
+    }
+
     private static IEnumerable<S3Driver.FileToUpload> GenerateValidFilesToUpload(
         int numberOfFiles,
         string queueId)
@@ -319,6 +352,15 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         return GenerateFilesToUpload(numberOfFiles, queueId, GetInvalidContentBody);
 
         string GetInvalidContentBody(int number) => $"invalid content body-{number}";
+    }
+    
+    private static IEnumerable<S3Driver.FileToUpload> GenerateEmptyFilesToUpload(
+        int numberOfFiles,
+        string queueId)
+    {
+        return GenerateFilesToUpload(numberOfFiles, queueId, GetInvalidContentBody);
+
+        string GetInvalidContentBody(int number) => "null";
     }
 
     private static IEnumerable<S3Driver.FileToUpload> GenerateFilesToUpload(
