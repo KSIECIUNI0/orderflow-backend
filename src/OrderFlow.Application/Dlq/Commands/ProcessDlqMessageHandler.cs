@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using OrderFlow.Application.Alerts;
 using OrderFlow.Application.Failures;
+using OrderFlow.Application.Failures.DTOs;
 using OrderFlow.Application.Messaging;
 
 namespace OrderFlow.Application.Dlq.Commands;

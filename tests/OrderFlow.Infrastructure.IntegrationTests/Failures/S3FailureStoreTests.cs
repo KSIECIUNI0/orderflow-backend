@@ -3,6 +3,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using OrderFlow.Application.Failures;
+using OrderFlow.Application.Failures.DTOs;
 using OrderFlow.Application.Messaging;
 using OrderFlow.Application.TestUtils.Builders.Failures;
 using OrderFlow.Infrastructure.Failures;

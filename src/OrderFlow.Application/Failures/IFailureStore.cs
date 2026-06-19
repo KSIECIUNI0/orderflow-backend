@@ -1,3 +1,5 @@
+using OrderFlow.Application.Failures.DTOs;
+
 namespace OrderFlow.Application.Failures;
 
 public interface IFailureStore

@@ -4,6 +4,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using OrderFlow.Application.Alerts;
 using OrderFlow.Application.Failures;
+using OrderFlow.Application.Failures.DTOs;
 using OrderFlow.Application.Messaging;
 using OrderFlow.Application.TestUtils.Builders.Commands;
 using OrderFlow.Application.TestUtils.Builders.Dlq;

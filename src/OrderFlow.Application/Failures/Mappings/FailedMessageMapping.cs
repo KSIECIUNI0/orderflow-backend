@@ -1,4 +1,6 @@
-namespace OrderFlow.Application.Failures;
+using OrderFlow.Application.Failures.DTOs;
+
+namespace OrderFlow.Application.Failures.Mappings;
 
 public static class FailedMessageMapping
 {

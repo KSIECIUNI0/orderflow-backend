@@ -6,6 +6,8 @@ using Amazon.S3.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OrderFlow.Application.Failures;
+using OrderFlow.Application.Failures.DTOs;
+using OrderFlow.Application.Failures.Mappings;
 using OrderFlow.Infrastructure.Configurations;
 
 namespace OrderFlow.Infrastructure.Failures;

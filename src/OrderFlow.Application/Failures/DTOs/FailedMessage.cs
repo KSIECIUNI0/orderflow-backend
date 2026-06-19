@@ -1,4 +1,4 @@
-namespace OrderFlow.Application.Failures;
+namespace OrderFlow.Application.Failures.DTOs;
 
 public record FailedMessage
 {

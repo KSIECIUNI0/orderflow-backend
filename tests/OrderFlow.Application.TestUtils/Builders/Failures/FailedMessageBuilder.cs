@@ -1,4 +1,5 @@
 using OrderFlow.Application.Failures;
+using OrderFlow.Application.Failures.DTOs;
 
 namespace OrderFlow.Application.TestUtils.Builders.Failures;
 
