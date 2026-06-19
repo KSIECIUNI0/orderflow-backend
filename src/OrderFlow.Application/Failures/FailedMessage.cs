@@ -7,5 +7,5 @@ public record FailedMessage
     public string? CorrelationId { get; init; }
     public string? EventType { get; init; }
     public required string Body { get; init; }
-    public DateTimeOffset FailedAt { get; } = DateTimeOffset.UtcNow;
+    public DateTimeOffset FailedAt { get; init; } = DateTimeOffset.UtcNow;
 }

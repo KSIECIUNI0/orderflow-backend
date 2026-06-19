@@ -18,7 +18,11 @@ public class S3Driver(IAmazonS3 s3)
         CancellationToken cancellationToken = default)
     {
         var keys = await s3.GetAllObjectKeysAsync(bucketName, prefix, null);
-        await s3.DeletesAsync(bucketName, keys, null, cancellationToken);
+        if (keys is not null && keys.Any())
+        {
+            await s3.DeletesAsync(bucketName, keys, null, cancellationToken);
+        }
+
         await s3.DeleteBucketAsync(bucketName, cancellationToken);
     }
     
@@ -53,5 +57,23 @@ public class S3Driver(IAmazonS3 s3)
         using var reader = new StreamReader(response.ResponseStream);
     
         return await reader.ReadToEndAsync(cancellationToken);
+    }
+
+    public record FileToUpload(string Key, string ContentBody);
+    
+    public async Task PutObjectsAsync(
+        string bucketName,
+        IEnumerable<FileToUpload> filesToUpload,
+        CancellationToken cancellationToken = default)
+    {
+        var uploadTasks = filesToUpload.Select(file =>
+            s3.PutObjectAsync(new PutObjectRequest
+            {
+                BucketName = bucketName,
+                Key = file.Key,
+                ContentBody = file.ContentBody
+            }, cancellationToken));
+        
+        await Task.WhenAll(uploadTasks);
     }
 }

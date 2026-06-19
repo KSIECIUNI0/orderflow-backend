@@ -27,7 +27,7 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<S3Options>(configuration.GetRequiredSection("S3"));
+        services.Configure<S3FailureStoreOptions>(configuration.GetRequiredSection("S3FailureStore"));
         services.Configure<SqsOptions>(configuration.GetRequiredSection("Sqs"));
         services.Configure<OrderCreatedQueueOptions>(configuration.GetRequiredSection("Queues:OrderCreated"));
         services.Configure<OrderCreatedDlqOptions>(configuration.GetRequiredSection("Queues:OrderCreatedDlq"));
