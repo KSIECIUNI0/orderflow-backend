@@ -17,13 +17,20 @@ public class S3Driver(IAmazonS3 s3)
         string prefix,
         CancellationToken cancellationToken = default)
     {
+        await ClearBucket(bucketName, prefix, cancellationToken);
+        await s3.DeleteBucketAsync(bucketName, cancellationToken);
+    }
+    
+    public async Task ClearBucket(
+        string bucketName,
+        string prefix,
+        CancellationToken cancellationToken = default)
+    {
         var keys = await s3.GetAllObjectKeysAsync(bucketName, prefix, null);
         if (keys is not null && keys.Any())
         {
             await s3.DeletesAsync(bucketName, keys, null, cancellationToken);
         }
-
-        await s3.DeleteBucketAsync(bucketName, cancellationToken);
     }
     
     public async Task<bool> FileExistsAsync(

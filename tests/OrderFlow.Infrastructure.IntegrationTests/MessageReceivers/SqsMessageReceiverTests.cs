@@ -3,27 +3,20 @@ using FluentAssertions;
 using OrderFlow.Application.Orders.Events;
 using OrderFlow.Infrastructure.MessageReceivers;
 using OrderFlow.Infrastructure.TestUtils.Builders.Options;
-using OrderFlow.TestCore.Drivers;
-using OrderFlow.TestCore.Fixtures;
+using OrderFlow.Infrastructure.TestUtils.Fixtures;
 
 namespace OrderFlow.Infrastructure.IntegrationTests.MessageReceivers;
 
 [Collection("SQS Container Collection")]
-public class SqsMessageReceiverTests(SqsContainerFixture fixture) : IAsyncLifetime
+public class SqsMessageReceiverTests(QueueFixture fixture) : IClassFixture<QueueFixture>, IAsyncLifetime
 {
-    private readonly SqsDriver _driver = new(fixture.SqsClient);
-    private string _queueUrl = null!;
-
     public async ValueTask InitializeAsync()
     {
-        _queueUrl = await _driver.CreateQueueAsync($"test-{Guid.NewGuid()}", TestContext.Current.CancellationToken);
+        await fixture.ClearQueueAsync();
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        await _driver.ClearAsync(_queueUrl, TestContext.Current.CancellationToken);
-    }
-
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    
     [Theory]
     [InlineData("abcd1234", "abcd1234")]
     [InlineData(null, "UNKNOWN")]
@@ -35,12 +28,12 @@ public class SqsMessageReceiverTests(SqsContainerFixture fixture) : IAsyncLifeti
         // Arrange
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var @event = new OrderCreatedEvent(orderId);
-        var messageId = await _driver.SendMessageAsync(@event, _queueUrl, correlationId, TestContext.Current.CancellationToken);
+        var messageId = await fixture.Driver.SendMessageAsync(@event, fixture.QueueUrl, correlationId, TestContext.Current.CancellationToken);
         var options = new SqsOptionsBuilder().Build();
-        var sut = new SqsMessageReceiver(_driver.SqsClient, options);
+        var sut = new SqsMessageReceiver(fixture.Driver.SqsClient, options);
         
         // Act
-        var result = await sut.ReceiveAsync(_queueUrl, TestContext.Current.CancellationToken);
+        var result = await sut.ReceiveAsync(fixture.QueueUrl, TestContext.Current.CancellationToken);
         
         // Assert
         result.Should()
@@ -54,7 +47,7 @@ public class SqsMessageReceiverTests(SqsContainerFixture fixture) : IAsyncLifeti
         message.Body.Should().Be(JsonSerializer.Serialize(@event));
         message.MessageId.Should().Be(messageId);
         message.ReceiptHandle.Should().NotBeNullOrEmpty();
-        message.QueueUrl.Should().Be(_queueUrl);
+        message.QueueUrl.Should().Be(fixture.QueueUrl);
     }
 
     [Fact]
@@ -62,10 +55,10 @@ public class SqsMessageReceiverTests(SqsContainerFixture fixture) : IAsyncLifeti
     {
         // Arrange
         var options = new SqsOptionsBuilder().Build();
-        var sut = new SqsMessageReceiver(_driver.SqsClient, options);
+        var sut = new SqsMessageReceiver(fixture.Driver.SqsClient, options);
         
         // Act
-        var result = await sut.ReceiveAsync(_queueUrl, TestContext.Current.CancellationToken);
+        var result = await sut.ReceiveAsync(fixture.QueueUrl, TestContext.Current.CancellationToken);
         
         // Assert
         result.Should().BeEmpty();
@@ -78,12 +71,12 @@ public class SqsMessageReceiverTests(SqsContainerFixture fixture) : IAsyncLifeti
         const string correlationId = "abcd1234";
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var @event = new OrderCreatedEvent(orderId);
-        await _driver.SendMessageAsync(@event, _queueUrl, correlationId, TestContext.Current.CancellationToken);
+        await fixture.Driver.SendMessageAsync(@event, fixture.QueueUrl, correlationId, TestContext.Current.CancellationToken);
         var options = new SqsOptionsBuilder().Build();
-        var sut = new SqsMessageReceiver(_driver.SqsClient, options);
+        var sut = new SqsMessageReceiver(fixture.Driver.SqsClient, options);
         
         // Act
-        var receivedMessages = await sut.ReceiveAsync(_queueUrl, TestContext.Current.CancellationToken);
+        var receivedMessages = await sut.ReceiveAsync(fixture.QueueUrl, TestContext.Current.CancellationToken);
         receivedMessages.Should()
             .NotBeEmpty()
             .And
@@ -93,7 +86,7 @@ public class SqsMessageReceiverTests(SqsContainerFixture fixture) : IAsyncLifeti
         await sut.CompleteAsync(receivedMessage, TestContext.Current.CancellationToken);
         
         // Assert
-        var receivedMessagesAfterDelete = await sut.ReceiveAsync(_queueUrl, TestContext.Current.CancellationToken);
+        var receivedMessagesAfterDelete = await sut.ReceiveAsync(fixture.QueueUrl, TestContext.Current.CancellationToken);
         receivedMessagesAfterDelete.Should().BeEmpty();
     }
 }

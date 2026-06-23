@@ -3,26 +3,19 @@ using OrderFlow.Application.Orders.Events;
 using OrderFlow.Infrastructure.EventBus;
 using System.Text.Json;
 using OrderFlow.Infrastructure.TestUtils.Builders.Options;
-using OrderFlow.TestCore.Drivers;
-using OrderFlow.TestCore.Fixtures;
+using OrderFlow.Infrastructure.TestUtils.Fixtures;
 
 namespace OrderFlow.Infrastructure.IntegrationTests.EventBus;
 
 [Collection("SQS Container Collection")]
-public class SqsEventBusTests(SqsContainerFixture fixture) : IAsyncLifetime
+public class SqsEventBusTests(QueueFixture fixture) : IClassFixture<QueueFixture>, IAsyncLifetime
 {
-    private readonly SqsDriver _driver = new(fixture.SqsClient);
-    private string _queueUrl = null!;
-
     public async ValueTask InitializeAsync()
     {
-        _queueUrl = await _driver.CreateQueueAsync($"test-{Guid.NewGuid()}", TestContext.Current.CancellationToken);
+        await fixture.ClearQueueAsync();
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        await _driver.ClearAsync(_queueUrl, TestContext.Current.CancellationToken);
-    }
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     
     [Fact]
     public async Task PublishOrderCreatedAsync_ShouldSendEventToQueueWithCorrelationId()
@@ -32,17 +25,17 @@ public class SqsEventBusTests(SqsContainerFixture fixture) : IAsyncLifetime
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
         var options = new OrderCreatedQueueOptionsBuilder()
-            .WithUrl(_queueUrl)
+            .WithUrl(fixture.QueueUrl)
             .Build();
         var @event = new OrderCreatedEvent(orderId);
         
-        var sut = new SqsEventBus(_driver.SqsClient, options);
+        var sut = new SqsEventBus(fixture.Driver.SqsClient, options);
         
         // Act
         await sut.PublishOrderCreatedAsync(@event, correlationId, TestContext.Current.CancellationToken);
         
         // Assert
-        var messages = await _driver.ReadAllAsync(_queueUrl, TestContext.Current.CancellationToken);
+        var messages = await fixture.Driver.ReadAllAsync(fixture.QueueUrl, TestContext.Current.CancellationToken);
         messages.Should().NotBeNullOrEmpty();
         messages.Should().HaveCount(1);
         var message = messages.First();
@@ -65,17 +58,17 @@ public class SqsEventBusTests(SqsContainerFixture fixture) : IAsyncLifetime
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
 
         var options = new OrderCreatedQueueOptionsBuilder()
-            .WithUrl(_queueUrl)
+            .WithUrl(fixture.QueueUrl)
             .Build();
         var @event = new OrderCreatedEvent(orderId);
         
-        var sut = new SqsEventBus(_driver.SqsClient, options);
+        var sut = new SqsEventBus(fixture.Driver.SqsClient, options);
         
         // Act
         await sut.PublishOrderCreatedAsync(@event, null, TestContext.Current.CancellationToken);
         
         // Assert
-        var messages = await _driver.ReadAllAsync(_queueUrl, TestContext.Current.CancellationToken);
+        var messages = await fixture.Driver.ReadAllAsync(fixture.QueueUrl, TestContext.Current.CancellationToken);
         messages.Should().NotBeNullOrEmpty();
         messages.Should().HaveCount(1);
         var message = messages.First();

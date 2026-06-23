@@ -2,35 +2,27 @@ using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
-using OrderFlow.Application.Failures;
 using OrderFlow.Application.Failures.DTOs;
 using OrderFlow.Application.Messaging;
 using OrderFlow.Application.TestUtils.Builders.Failures;
 using OrderFlow.Infrastructure.Failures;
 using OrderFlow.Infrastructure.TestUtils.Builders.Options;
+using OrderFlow.Infrastructure.TestUtils.Fixtures;
+using OrderFlow.Infrastructure.TestUtils.Generators;
 using OrderFlow.TestCore.Drivers;
-using OrderFlow.TestCore.Fixtures;
 
 namespace OrderFlow.Infrastructure.IntegrationTests.Failures;
 
 [Collection("S3 Container Collection")]
-public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
+public class S3FailureStoreTests(StoreFixture fixture) : IClassFixture<StoreFixture>, IAsyncLifetime
 {
-    private readonly S3Driver _driver = new(fixture.S3Client);
-    private string _bucketName = null!;
-    private const string Prefix = "dlq";
-    
     public async ValueTask InitializeAsync()
     {
-        _bucketName = $"test-{Guid.NewGuid()}";
-        await _driver.CreateBucket(_bucketName, TestContext.Current.CancellationToken);
-    }
-    
-    public async ValueTask DisposeAsync()
-    {
-        await _driver.DeleteBucket(_bucketName, Prefix, TestContext.Current.CancellationToken);
+        await fixture.ClearBucket();
     }
 
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    
     [Fact]
     public async Task SaveFailedMessageAsync_ShouldPutFailedMessageInTheBucket()
     {
@@ -40,12 +32,12 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         const string correlationId = "321bca";
         const string eventType = "fakeEventType";
         const string messageBody = "test message body";
-        const string expectedKey = $"{Prefix}/{queueId}/{messageId}.json";
+        var expectedKey = $"{StoreFixture.Prefix}/{queueId}/{messageId}.json";
 
         var logger = new FakeLogger<S3FailureStore>();
         var options = new S3FailureStoreOptionsBuilder()
-            .WithBucketName(_bucketName)
-            .WithPrefix(Prefix)
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
             .Build();
         var failedMessage = new FailedMessageBuilder()
             .WithQueueIdentifier(queueId)
@@ -54,16 +46,16 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
             .WithEventType(eventType)
             .WithBody(messageBody)
             .Build();
-        var sut = new S3FailureStore(_driver.S3Client, options, logger);
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
         
         // Act
         await sut.SaveFailedMessageAsync(failedMessage, TestContext.Current.CancellationToken);
         
         // Assert
-        var fileExists = await _driver.FileExistsAsync(_bucketName, expectedKey, TestContext.Current.CancellationToken);
+        var fileExists = await fixture.Driver.FileExistsAsync(fixture.BucketName, expectedKey, TestContext.Current.CancellationToken);
         fileExists.Should().BeTrue();
         
-        var content = await _driver.GetFileContentAsTextAsync(_bucketName, expectedKey, TestContext.Current.CancellationToken);
+        var content = await fixture.Driver.GetFileContentAsTextAsync(fixture.BucketName, expectedKey, TestContext.Current.CancellationToken);
         content.Should().NotBeNullOrEmpty();
         
         var bucketMessage = JsonSerializer.Deserialize<FailedMessage>(content);
@@ -83,11 +75,11 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         const int maxPageSize = 10;
         var logger = new FakeLogger<S3FailureStore>();
         var options = new S3FailureStoreOptionsBuilder()
-            .WithBucketName(_bucketName)
-            .WithPrefix(Prefix)
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
             .WithMaxPageSize(maxPageSize)
             .Build();
-        var sut = new S3FailureStore(_driver.S3Client, options, logger);
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
         
         // Act
         var result = await sut.GetPageAsync(pageSize, null, TestContext.Current.CancellationToken);
@@ -110,14 +102,14 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         const string queueId = QueueIdentifiers.OrderCreated;
         var logger = new FakeLogger<S3FailureStore>();
         var options = new S3FailureStoreOptionsBuilder()
-            .WithBucketName(_bucketName)
-            .WithPrefix(Prefix)
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
             .WithMaxPageSize(maxPageSize)
             .Build();
-        var sut = new S3FailureStore(_driver.S3Client, options, logger);
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
 
-        var files = GenerateValidFilesToUpload(numberOfMessages, queueId);
-        await _driver.PutObjectsAsync(_bucketName, files, TestContext.Current.CancellationToken);
+        var files = S3FileToUploadGenerator.GenerateValidFilesToUpload(numberOfMessages, queueId);
+        await fixture.Driver.PutObjectsAsync(fixture.BucketName, files, TestContext.Current.CancellationToken);
         
         // Act
         var result = await sut.GetPageAsync(pageSize, null, TestContext.Current.CancellationToken);
@@ -139,14 +131,14 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         const string queueId = QueueIdentifiers.OrderCreated;
         var logger = new FakeLogger<S3FailureStore>();
         var options = new S3FailureStoreOptionsBuilder()
-            .WithBucketName(_bucketName)
-            .WithPrefix(Prefix)
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
             .WithMaxPageSize(maxPageSize)
             .Build();
-        var sut = new S3FailureStore(_driver.S3Client, options, logger);
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
 
-        var files = GenerateValidFilesToUpload(numberOfMessages, queueId);
-        await _driver.PutObjectsAsync(_bucketName, files, TestContext.Current.CancellationToken);
+        var files = S3FileToUploadGenerator.GenerateValidFilesToUpload(numberOfMessages, queueId);
+        await fixture.Driver.PutObjectsAsync(fixture.BucketName, files, TestContext.Current.CancellationToken);
         
         // Act
         var result = await sut.GetPageAsync(pageSize, null, TestContext.Current.CancellationToken);
@@ -168,14 +160,14 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         const string queueId = QueueIdentifiers.OrderCreated;
         var logger = new FakeLogger<S3FailureStore>();
         var options = new S3FailureStoreOptionsBuilder()
-            .WithBucketName(_bucketName)
-            .WithPrefix(Prefix)
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
             .WithMaxPageSize(maxPageSize)
             .Build();
-        var sut = new S3FailureStore(_driver.S3Client, options, logger);
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
 
-        var files = GenerateValidFilesToUpload(numberOfMessages, queueId);
-        await _driver.PutObjectsAsync(_bucketName, files, TestContext.Current.CancellationToken);
+        var files = S3FileToUploadGenerator.GenerateValidFilesToUpload(numberOfMessages, queueId);
+        await fixture.Driver.PutObjectsAsync(fixture.BucketName, files, TestContext.Current.CancellationToken);
         
         // Act
         var firstPage = await sut.GetPageAsync(pageSize, null, TestContext.Current.CancellationToken);
@@ -201,21 +193,21 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         const int maxPageSize = 10;
         const string messageId = "abc123";
         const string queueId = QueueIdentifiers.OrderCreated;
-        const string key = $"{Prefix}/{queueId}/{messageId}.json";
+        var key = $"{StoreFixture.Prefix}/{queueId}/{messageId}.json";
         var logger = new FakeLogger<S3FailureStore>();
         var options = new S3FailureStoreOptionsBuilder()
-            .WithBucketName(_bucketName)
-            .WithPrefix(Prefix)
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
             .WithMaxPageSize(maxPageSize)
             .Build();
-        var sut = new S3FailureStore(_driver.S3Client, options, logger);
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
 
         var failedMessage = new FailedMessageBuilder()
             .WithMessageId(messageId)
             .WithQueueIdentifier(queueId)
             .Build();
         var file = new S3Driver.FileToUpload(key, JsonSerializer.Serialize(failedMessage));
-        await _driver.PutObjectsAsync(_bucketName, [file], TestContext.Current.CancellationToken);
+        await fixture.Driver.PutObjectsAsync(fixture.BucketName, [file], TestContext.Current.CancellationToken);
         
         // Act
         var result = await sut.GetPageAsync(pageSize, null, TestContext.Current.CancellationToken);
@@ -243,15 +235,15 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         const string queueId = QueueIdentifiers.OrderCreated;
         var logger = new FakeLogger<S3FailureStore>();
         var options = new S3FailureStoreOptionsBuilder()
-            .WithBucketName(_bucketName)
-            .WithPrefix(Prefix)
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
             .WithMaxPageSize(maxPageSize)
             .Build();
-        var sut = new S3FailureStore(_driver.S3Client, options, logger);
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
 
-        var validFiles = GenerateValidFilesToUpload(numberOfValidMessages, queueId);
-        var invalidFiles = GenerateInvalidFilesToUpload(numberOfInvalidMessages, queueId);
-        await _driver.PutObjectsAsync(_bucketName, [..validFiles, ..invalidFiles], TestContext.Current.CancellationToken);
+        var validFiles = S3FileToUploadGenerator.GenerateValidFilesToUpload(numberOfValidMessages, queueId);
+        var invalidFiles = S3FileToUploadGenerator.GenerateInvalidFilesToUpload(numberOfInvalidMessages, queueId);
+        await fixture.Driver.PutObjectsAsync(fixture.BucketName, [..validFiles, ..invalidFiles], TestContext.Current.CancellationToken);
         
         // Act
         var act = () => sut.GetPageAsync(pageSize, null, TestContext.Current.CancellationToken);
@@ -276,14 +268,14 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         const string queueId = QueueIdentifiers.OrderCreated;
         var logger = new FakeLogger<S3FailureStore>();
         var options = new S3FailureStoreOptionsBuilder()
-            .WithBucketName(_bucketName)
-            .WithPrefix(Prefix)
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
             .WithMaxPageSize(maxPageSize)
             .Build();
-        var sut = new S3FailureStore(_driver.S3Client, options, logger);
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
 
-        var invalidFiles = GenerateInvalidFilesToUpload(numberOfInvalidMessages, queueId);
-        await _driver.PutObjectsAsync(_bucketName, invalidFiles, TestContext.Current.CancellationToken);
+        var invalidFiles = S3FileToUploadGenerator.GenerateInvalidFilesToUpload(numberOfInvalidMessages, queueId);
+        await fixture.Driver.PutObjectsAsync(fixture.BucketName, invalidFiles, TestContext.Current.CancellationToken);
         
         // Act
         var act = () => sut.GetPageAsync(pageSize, null, TestContext.Current.CancellationToken);
@@ -309,14 +301,14 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
         const string queueId = QueueIdentifiers.OrderCreated;
         var logger = new FakeLogger<S3FailureStore>();
         var options = new S3FailureStoreOptionsBuilder()
-            .WithBucketName(_bucketName)
-            .WithPrefix(Prefix)
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
             .WithMaxPageSize(maxPageSize)
             .Build();
-        var sut = new S3FailureStore(_driver.S3Client, options, logger);
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
 
-        var emptyFiles = GenerateEmptyFilesToUpload(numberOfEmptyMessages, queueId);
-        await _driver.PutObjectsAsync(_bucketName, emptyFiles, TestContext.Current.CancellationToken);
+        var emptyFiles = S3FileToUploadGenerator.GenerateEmptyFilesToUpload(numberOfEmptyMessages, queueId);
+        await fixture.Driver.PutObjectsAsync(fixture.BucketName, emptyFiles, TestContext.Current.CancellationToken);
         
         // Act
         var act = () => sut.GetPageAsync(pageSize, null, TestContext.Current.CancellationToken);
@@ -331,46 +323,4 @@ public class S3FailureStoreTests(S3ContainerFixture fixture) : IAsyncLifetime
             .Select(log => log.Level == LogLevel.Warning)
             .Should().BeEmpty();
     }
-
-    private static IEnumerable<S3Driver.FileToUpload> GenerateValidFilesToUpload(
-        int numberOfFiles,
-        string queueId)
-    {
-        return GenerateFilesToUpload(numberOfFiles, queueId, GetValidContentBody);
-
-        string GetValidContentBody(int number) =>
-            JsonSerializer.Serialize(new FailedMessageBuilder()
-                .WithMessageId($"MessageId-{number}")
-                .WithCorrelationId($"CorrelationId-{number}")
-                .WithQueueIdentifier(queueId)
-                .Build());
-    }
-    
-    private static IEnumerable<S3Driver.FileToUpload> GenerateInvalidFilesToUpload(
-        int numberOfFiles,
-        string queueId)
-    {
-        return GenerateFilesToUpload(numberOfFiles, queueId, GetInvalidContentBody);
-
-        string GetInvalidContentBody(int number) => $"invalid content body-{number}";
-    }
-    
-    private static IEnumerable<S3Driver.FileToUpload> GenerateEmptyFilesToUpload(
-        int numberOfFiles,
-        string queueId)
-    {
-        return GenerateFilesToUpload(numberOfFiles, queueId, GetInvalidContentBody);
-
-        string GetInvalidContentBody(int number) => "null";
-    }
-
-    private static IEnumerable<S3Driver.FileToUpload> GenerateFilesToUpload(
-        int numberOfFiles,
-        string queueId,
-        Func<int, string> getContentBody) =>
-            Enumerable
-                .Range(1, numberOfFiles)
-                .Select(number => new S3Driver.FileToUpload(
-                    $"{Prefix}/{queueId}/message-{Guid.NewGuid()}.json",
-                    getContentBody(number)));
 }

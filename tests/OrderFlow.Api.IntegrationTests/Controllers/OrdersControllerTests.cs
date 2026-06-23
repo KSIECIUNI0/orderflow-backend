@@ -1,49 +1,22 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using Amazon.SQS;
 using FluentAssertions;
-using OrderFlow.Api.TestUtils.Factories;
+using OrderFlow.Api.TestUtils.Fixtures;
 using OrderFlow.Application.Orders.DTOs;
 using OrderFlow.Application.Orders.Events;
 using OrderFlow.Application.TestUtils.Builders.DTOs;
-using OrderFlow.Infrastructure;
-using OrderFlow.Infrastructure.TestUtils.Drivers;
-using OrderFlow.TestCore.Drivers;
-using OrderFlow.TestCore.Fixtures;
 
 namespace OrderFlow.Api.IntegrationTests.Controllers;
 
-[Collection("Api Controllers Tests Collection")]
-public class OrdersControllerTests : IAsyncLifetime
+[Collection("DataBase and Queue Tests Collection")]
+public class OrdersControllerTests(OrdersApiFixture fixture) : IClassFixture<OrdersApiFixture>, IAsyncLifetime
 {
-    private readonly HttpClient _client;
-    private readonly SqsDriver _sqsDriver;
-    private readonly OrderFlowDbContextDriver _dbContextDriver;
-    private string _queueUrl = null!;
-
-    public OrdersControllerTests(
-        PostgreSqlContainerFixture dbFixture,
-        SqsContainerFixture sqsFixture)
-    {
-        var factory = new OrderFlowApiFactory(
-            dbFixture.ConnectionString,
-            sqsFixture.SqsUrl);
-        
-        _client = factory.CreateClient();
-        _sqsDriver = new SqsDriver(factory.GetDependency<IAmazonSQS>());
-        _dbContextDriver = new OrderFlowDbContextDriver(factory.GetDependency<OrderFlowDbContext>());
-    }
-
     public async ValueTask InitializeAsync()
     {
-        _queueUrl = await _sqsDriver.CreateQueueAsync("order-created-queue", TestContext.Current.CancellationToken);
+        await fixture.Clear();
     }
 
-    public async ValueTask DisposeAsync()
-    {
-        await _dbContextDriver.ClearAsync(TestContext.Current.CancellationToken);
-        await _sqsDriver.ClearAsync(_queueUrl, TestContext.Current.CancellationToken);
-    }
+    public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     
     [Fact]
     public async Task CreateOrder_ShouldCreateOrder_WhenModelIsValid()
@@ -57,7 +30,7 @@ public class OrdersControllerTests : IAsyncLifetime
             .Build();
         
         // Act
-        var createdResponse = await _client.PostAsJsonAsync("/api/orders", request);
+        var createdResponse = await fixture.HttpClient.PostAsJsonAsync("/api/orders", request);
 
         // Assert
         createdResponse.Should()
@@ -73,7 +46,7 @@ public class OrdersControllerTests : IAsyncLifetime
         createdOrderResponse.ProductName.Should().Be(productName);
         createdOrderResponse.Quantity.Should().Be(quantity);
 
-        var getResponse = await _client.GetAsync($"/api/orders/{createdOrderResponse.Id}", TestContext.Current.CancellationToken);
+        var getResponse = await fixture.HttpClient.GetAsync($"/api/orders/{createdOrderResponse.Id}", TestContext.Current.CancellationToken);
         
         getResponse.Should().Be200Ok();
         var orderResponse = await getResponse.Content.ReadFromJsonAsync<OrderResponse>(TestContext.Current.CancellationToken);
@@ -82,7 +55,7 @@ public class OrdersControllerTests : IAsyncLifetime
         orderResponse.ProductName.Should().Be(createdOrderResponse.ProductName);
         orderResponse.Quantity.Should().Be(createdOrderResponse.Quantity);
 
-        var messages = await _sqsDriver.ReadAllAsync(_queueUrl, TestContext.Current.CancellationToken);
+        var messages = await fixture.SqsDriver.ReadAllAsync(fixture.QueueUrl, TestContext.Current.CancellationToken);
         messages.Should().NotBeNullOrEmpty();
         messages.Should().HaveCount(1);
         var message = messages.First();
@@ -106,7 +79,7 @@ public class OrdersControllerTests : IAsyncLifetime
             .WithNegativeQuantity()
             .Build();
 
-        var response = await _client.PostAsJsonAsync("/api/orders", request);
+        var response = await fixture.HttpClient.PostAsJsonAsync("/api/orders", request);
 
         response.Should()
             .Be400BadRequest()
@@ -119,7 +92,7 @@ public class OrdersControllerTests : IAsyncLifetime
     {
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         
-        var response  = await _client.GetAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
+        var response  = await fixture.HttpClient.GetAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
         
         response.Should().Be404NotFound();
     }
@@ -132,11 +105,11 @@ public class OrdersControllerTests : IAsyncLifetime
         const int order1Quantity = 1;
         const string order2ProductName = "product name 2";
         const int order2Quantity = 2;
-        var order1Id = await _dbContextDriver.InsertAsync(order1ProductName, order1Quantity, TestContext.Current.CancellationToken);
-        var order2Id = await _dbContextDriver.InsertAsync(order2ProductName, order2Quantity, TestContext.Current.CancellationToken);
+        var order1Id = await fixture.DbContextDriver.InsertAsync(order1ProductName, order1Quantity, TestContext.Current.CancellationToken);
+        var order2Id = await fixture.DbContextDriver.InsertAsync(order2ProductName, order2Quantity, TestContext.Current.CancellationToken);
         
         // Act
-        var response = await _client.GetAsync("api/orders", TestContext.Current.CancellationToken);
+        var response = await fixture.HttpClient.GetAsync("api/orders", TestContext.Current.CancellationToken);
         
         // Assert
         response.Should()
@@ -162,11 +135,11 @@ public class OrdersControllerTests : IAsyncLifetime
     [Fact]
     public async Task GetAll_ShouldReturnEmptyCollection_WhenThereAreNoOrders()
     {
-        var orderCount = await _dbContextDriver.CountAsync(TestContext.Current.CancellationToken);
+        var orderCount = await fixture.DbContextDriver.CountAsync(TestContext.Current.CancellationToken);
 
         orderCount.Should().Be(0);
         
-        var response = await _client.GetAsync("api/orders", TestContext.Current.CancellationToken);
+        var response = await fixture.HttpClient.GetAsync("api/orders", TestContext.Current.CancellationToken);
 
         response.Should()
             .Be200Ok()
@@ -183,7 +156,7 @@ public class OrdersControllerTests : IAsyncLifetime
             .WithNegativeQuantity()
             .Build();
         
-        var response  = await _client.PutAsJsonAsync($"/api/orders/{orderId}", request);
+        var response  = await fixture.HttpClient.PutAsJsonAsync($"/api/orders/{orderId}", request);
         
         response.Should()
             .Be400BadRequest()
@@ -197,7 +170,7 @@ public class OrdersControllerTests : IAsyncLifetime
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var request = new CreateOrderRequestBuilder().Build();
         
-        var response  = await _client.PutAsJsonAsync($"/api/orders/{orderId}", request);
+        var response  = await fixture.HttpClient.PutAsJsonAsync($"/api/orders/{orderId}", request);
 
         response.Should().Be404NotFound();
     }
@@ -208,18 +181,18 @@ public class OrdersControllerTests : IAsyncLifetime
         const string newProductName = "New product name";
         const int newQuantity = 100;
         
-        var orderId = await _dbContextDriver.InsertAsync("productName", 1, TestContext.Current.CancellationToken);
+        var orderId = await fixture.DbContextDriver.InsertAsync("productName", 1, TestContext.Current.CancellationToken);
         
         var request = new CreateOrderRequestBuilder()
             .WithProductName(newProductName)
             .WithQuantity(newQuantity)
             .Build();
         
-        var updateResponse = await _client.PutAsJsonAsync($"/api/orders/{orderId}", request);
+        var updateResponse = await fixture.HttpClient.PutAsJsonAsync($"/api/orders/{orderId}", request);
 
         updateResponse.Should().Be204NoContent();
         
-        var getResponse = await _client.GetAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
+        var getResponse = await fixture.HttpClient.GetAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
         
         getResponse.Should().Be200Ok();
         var orderResponse = await getResponse.Content.ReadFromJsonAsync<OrderResponse>(TestContext.Current.CancellationToken);
@@ -233,7 +206,7 @@ public class OrdersControllerTests : IAsyncLifetime
     {
         var orderId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         
-        var response  = await _client.DeleteAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
+        var response  = await fixture.HttpClient.DeleteAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
 
         response.Should().Be404NotFound();
     }
@@ -241,13 +214,13 @@ public class OrdersControllerTests : IAsyncLifetime
     [Fact]
     public async Task DeleteOrder_ShouldDeleteOrder_WhenExists()
     {
-        var orderId = await _dbContextDriver.InsertAsync("productName", 1, TestContext.Current.CancellationToken);
+        var orderId = await fixture.DbContextDriver.InsertAsync("productName", 1, TestContext.Current.CancellationToken);
         
-        var deleteResponse = await _client.DeleteAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
+        var deleteResponse = await fixture.HttpClient.DeleteAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
 
         deleteResponse.Should().Be204NoContent();
         
-        var getResponse = await _client.GetAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
+        var getResponse = await fixture.HttpClient.GetAsync($"/api/orders/{orderId}", TestContext.Current.CancellationToken);
         
         getResponse.Should().Be404NotFound();
     }

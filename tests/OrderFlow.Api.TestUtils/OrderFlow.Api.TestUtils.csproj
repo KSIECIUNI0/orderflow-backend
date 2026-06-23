@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\OrderFlow.Api\OrderFlow.Api.csproj" />
+      <ProjectReference Include="..\OrderFlow.Infrastructure.TestUtils\OrderFlow.Infrastructure.TestUtils.csproj" />
       <ProjectReference Include="..\OrderFlow.TestCore\OrderFlow.TestCore.csproj" />
     </ItemGroup>
 

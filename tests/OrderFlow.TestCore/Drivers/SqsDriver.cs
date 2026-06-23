@@ -51,6 +51,11 @@ public class SqsDriver(IAmazonSQS sqs)
             }
         }
     }
+
+    public async Task DeleteAsync(string queueUrl, CancellationToken cancellationToken = default)
+    {
+        await sqs.DeleteQueueAsync(queueUrl, cancellationToken);
+    }
     
     public async Task<string> SendMessageAsync<TMessage>(
         TMessage message,
