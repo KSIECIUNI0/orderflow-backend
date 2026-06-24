@@ -34,15 +34,11 @@ public class HttpCorrelationIdAccessorTests
         // Arrange
         var builder = new HttpCorrelationIdAccessorBuilder();
         var httpContextAccessor = builder.FreezeHttpContextAccessor();
-
-        var fakeHttpContext = new FakeHttpContext
-        {
-            Items = new Dictionary<object, object?>()
-        };
+        var context = new DefaultHttpContext();
 
         httpContextAccessor
             .HttpContext
-            .Returns(fakeHttpContext);
+            .Returns(context);
         
         var sut = builder.Build();
         
@@ -60,7 +56,7 @@ public class HttpCorrelationIdAccessorTests
         var builder = new HttpCorrelationIdAccessorBuilder();
         var httpContextAccessor = builder.FreezeHttpContextAccessor();
 
-        var fakeHttpContext = new FakeHttpContext
+        var context = new DefaultHttpContext
         {
             Items = new Dictionary<object, object?>
             {
@@ -70,7 +66,7 @@ public class HttpCorrelationIdAccessorTests
 
         httpContextAccessor
             .HttpContext
-            .Returns(fakeHttpContext);
+            .Returns(context);
         
         var sut = builder.Build();
         
@@ -89,7 +85,7 @@ public class HttpCorrelationIdAccessorTests
         var builder = new HttpCorrelationIdAccessorBuilder();
         var httpContextAccessor = builder.FreezeHttpContextAccessor();
 
-        var fakeHttpContext = new FakeHttpContext
+        var context = new DefaultHttpContext
         {
             Items = new Dictionary<object, object?>
             {
@@ -99,7 +95,7 @@ public class HttpCorrelationIdAccessorTests
 
         httpContextAccessor
             .HttpContext
-            .Returns(fakeHttpContext);
+            .Returns(context);
         
         var sut = builder.Build();
         
@@ -117,14 +113,11 @@ public class HttpCorrelationIdAccessorTests
         const string correlationId = "abcd1234";
         var builder = new HttpCorrelationIdAccessorBuilder();
         var httpContextAccessor = builder.FreezeHttpContextAccessor();
-
-        var fakeHttpResponse = new FakeHttpResponse();
-        var fakeHttpContext = new FakeHttpContext();
-        fakeHttpContext.SetFakeHttpResponce(fakeHttpResponse);
+        var context = new DefaultHttpContext();
 
         httpContextAccessor
             .HttpContext
-            .Returns(fakeHttpContext);
+            .Returns(context);
         
         var sut = builder.Build();
         
@@ -132,12 +125,12 @@ public class HttpCorrelationIdAccessorTests
         sut.Set(correlationId);
         
         // Assert
-        fakeHttpContext.Items.Should()
+        context.Items.Should()
             .ContainKey("X-Correlation-Id")
             .And
             .ContainValue(correlationId);
 
-        var responseHeader = fakeHttpResponse.Headers["X-Correlation-Id"];
+        var responseHeader = context.Response.Headers["X-Correlation-Id"];
         responseHeader.Should().NotBeNullOrEmpty();
         responseHeader.Should().Contain(correlationId);
     }

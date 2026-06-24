@@ -1,5 +1,4 @@
 using System.Net;
-using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using OrderFlow.Domain.Abstractions;
 
@@ -20,7 +19,7 @@ public class ExceptionHandlingMiddleware : IMiddleware
         }
         catch (Exception ex)
         {
-            await WriteError(context, ex.Message, "Unexpected error occured", HttpStatusCode.BadRequest);
+            await WriteError(context, ex.Message, "Unexpected error occured", HttpStatusCode.InternalServerError);
         }
     }
 
@@ -38,6 +37,6 @@ public class ExceptionHandlingMiddleware : IMiddleware
         };
         context.Response.StatusCode = (int)statusCode;
         context.Response.ContentType = "application/json";
-        return context.Response.WriteAsync(JsonSerializer.Serialize(problem));
+        return context.Response.WriteAsJsonAsync(problem);
     }
 }
