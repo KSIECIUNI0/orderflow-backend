@@ -1,5 +1,5 @@
 using MediatR;
-using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Messaging.DTOs;
 
 namespace OrderFlow.Application.Dlq.Commands;
 

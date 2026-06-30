@@ -8,9 +8,8 @@ namespace OrderFlow.TestCore.Fixtures;
 public class S3ContainerFixture : IAsyncLifetime
 {
     private readonly LocalStackContainer _container = new LocalStackBuilder()
-        .WithImage("localstack/localstack:3.0")
+        .WithImage("localstack/localstack:3.0.2")
         .WithEnvironment("SERVICES", "s3")
-        .WithEnvironment("DEFAULT_REGION", "us-east-1")
         .Build();
     
     public IAmazonS3 S3Client { get; private set; } = null!;
@@ -25,6 +24,7 @@ public class S3ContainerFixture : IAsyncLifetime
             new BasicAWSCredentials("test", "test"),
             new AmazonS3Config
             {
+                AuthenticationRegion = "us-east-1",
                 ServiceURL = S3Url,
                 UseHttp = true,
                 ForcePathStyle = true

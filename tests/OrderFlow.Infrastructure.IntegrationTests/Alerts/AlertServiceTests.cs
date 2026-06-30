@@ -1,23 +1,20 @@
 using System.Text.Json;
 using FluentAssertions;
-using OrderFlow.Application.Alerts;
-using OrderFlow.Application.TestUtils.Builders.Alerts;
+using OrderFlow.Application.Alerts.DTOs;
+using OrderFlow.Application.TestUtils.Builders.DTOs;
 using OrderFlow.Infrastructure.Alerts;
-using OrderFlow.TestCore.Drivers;
-using OrderFlow.TestCore.Fixtures;
+using OrderFlow.Infrastructure.TestUtils.Fixtures;
 
 namespace OrderFlow.Infrastructure.IntegrationTests.Alerts;
 
 [Collection("WireMock collection")]
-public class AlertServiceTests(WireMockFixture fixture) : IAsyncLifetime
+public class AlertServiceTests(WireMockDriverFixture fixture) : IClassFixture<WireMockDriverFixture>, IAsyncLifetime
 {
     private const string AlertServicePath = "/alerts";
     private readonly JsonSerializerOptions _jsonSerializerOptions = new()
         { PropertyNameCaseInsensitive = true };
 
-    private readonly WireMockDriver _wireMockDriver = new(fixture.Server);
-
-    public ValueTask InitializeAsync() => _wireMockDriver.ResetLogEntries();
+    public ValueTask InitializeAsync() => fixture.ResetLogEntries();
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
@@ -37,16 +34,16 @@ public class AlertServiceTests(WireMockFixture fixture) : IAsyncLifetime
             .WithError(error)
             .Build();
         
-        _wireMockDriver.ConfigureSuccessfulResponse(AlertServicePath);
+        fixture.Driver.ConfigureSuccessfulResponse(AlertServicePath);
         
-        var sut = new AlertService(_wireMockDriver.CreateClient());
+        var sut = new AlertService(fixture.Driver.CreateClient());
 
         // Act
         await sut.SendAsync(request, TestContext.Current.CancellationToken);
 
         // Assert
-        fixture.Server.LogEntries.Should().ContainSingle();
-        var messageBody = fixture.Server.LogEntries.Single().RequestMessage?.Body;
+        fixture.LogEntries.Should().ContainSingle();
+        var messageBody = fixture.LogEntries.Single().RequestMessage?.Body;
 
         messageBody.Should().NotBeNullOrEmpty();
         var requestMessage = JsonSerializer.Deserialize<AlertRequest>(messageBody, _jsonSerializerOptions);
@@ -63,8 +60,8 @@ public class AlertServiceTests(WireMockFixture fixture) : IAsyncLifetime
     {
         // Arrange
         var request = new AlertRequestBuilder().Build();
-        _wireMockDriver.ConfigureInternalServerError(AlertServicePath);
-        var sut = new AlertService(_wireMockDriver.CreateClient());
+        fixture.Driver.ConfigureInternalServerError(AlertServicePath);
+        var sut = new AlertService(fixture.Driver.CreateClient());
         
         // Act
         var act = () => sut.SendAsync(request, TestContext.Current.CancellationToken);

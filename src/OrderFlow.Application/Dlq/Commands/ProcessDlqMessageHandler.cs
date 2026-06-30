@@ -1,8 +1,10 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using OrderFlow.Application.Alerts;
+using OrderFlow.Application.Alerts.DTOs;
 using OrderFlow.Application.Failures;
-using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Failures.DTOs;
+using OrderFlow.Application.Messaging.DTOs;
 
 namespace OrderFlow.Application.Dlq.Commands;
 
@@ -37,7 +39,7 @@ public class ProcessDlqMessageHandler(
             Body = command.QueueMessage.Body
         };
         
-        await failureStore.SaveFailedMessageAsync(failedMessage, cancellationToken);
+        await failureStore.SaveAsync(failedMessage, cancellationToken);
     }
 
     private async Task SendAlertAsync(

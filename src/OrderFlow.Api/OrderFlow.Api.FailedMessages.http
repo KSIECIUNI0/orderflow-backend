@@ -1,0 +1,6 @@
+@host = http://localhost:5270
+@pageSize = 10
+
+### Get failed messages
+GET {{host}}/api/failed-messages?pageSize={{pageSize}}
+Content-Type: application/json

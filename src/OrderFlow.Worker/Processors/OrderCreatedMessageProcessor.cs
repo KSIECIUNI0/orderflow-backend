@@ -2,6 +2,7 @@ using System.Text.Json;
 using MediatR;
 using OrderFlow.Application.Correlation;
 using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Messaging.DTOs;
 using OrderFlow.Application.Orders.Commands;
 using OrderFlow.Application.Orders.Events;
 using Serilog.Context;
