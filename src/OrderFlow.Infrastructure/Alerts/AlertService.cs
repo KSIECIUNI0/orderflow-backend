@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using OrderFlow.Application.Alerts;
+using OrderFlow.Application.Alerts.DTOs;
 
 namespace OrderFlow.Infrastructure.Alerts;
 

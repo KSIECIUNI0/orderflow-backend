@@ -1,5 +1,5 @@
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Text.Json;
 using Amazon.S3;
 using Amazon.S3.Model;
@@ -20,11 +20,11 @@ public class S3FailureStore(
     private readonly S3FailureStoreOptions _options = options.Value;
     private readonly JsonSerializerOptions _jsonSerializerOptions = new() { WriteIndented = true };
 
-    public async Task SaveFailedMessageAsync(FailedMessage message, CancellationToken cancellationToken = default)
+    public async Task SaveAsync(FailedMessage message, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(message, nameof(message));
         
-        var key = $"{_options.Prefix}/{message.QueueIdentifier}/{message.MessageId}.json";
+        var key = BuildKey(message.QueueIdentifier, message.MessageId);
         
         await s3.PutObjectAsync(new PutObjectRequest
         {
@@ -61,10 +61,42 @@ public class S3FailureStore(
             listObjectsResponse.NextContinuationToken);
     }
 
-    [ExcludeFromCodeCoverage] // TODO: Remove after implementation
-    public Task RemoveAsync(string queueName, string messageId, CancellationToken cancellationToken = default)
+    public async Task<FailedMessage?> GetFailedMessageAsync(
+        string queueIdentifier,
+        string messageId,
+        CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        ArgumentException.ThrowIfNullOrEmpty(queueIdentifier, nameof(queueIdentifier));
+        ArgumentException.ThrowIfNullOrEmpty(messageId, nameof(messageId));
+        
+        var key = BuildKey(queueIdentifier, messageId);
+        try
+        {
+            var content = await GetFileContentAsTextAsync(key, cancellationToken);
+            
+            return JsonSerializer.Deserialize<FailedMessage>(
+                content,
+                _jsonSerializerOptions);
+        }
+        catch (AmazonS3Exception ex)
+            when (
+                ex.ErrorCode == "NoSuchKey" ||
+                ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
+    }
+    
+    public async Task DeleteFailedMessageAsync(
+        string queueIdentifier,
+        string messageId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(queueIdentifier, nameof(queueIdentifier));
+        ArgumentException.ThrowIfNullOrEmpty(messageId, nameof(messageId));
+        
+        var key = BuildKey(queueIdentifier, messageId);
+        await s3.DeleteAsync(_options.BucketName, key, null, cancellationToken);
     }
 
     private async Task<IReadOnlyList<FailedMessagePageItem>> GetParallelFailedMessagePageItemsAsync(
@@ -137,4 +169,7 @@ public class S3FailureStore(
     
         return await reader.ReadToEndAsync(cancellationToken);
     }
+    
+    private string BuildKey(string queueIdentifier, string messageId)
+        => $"{_options.Prefix}/{queueIdentifier}/{messageId}.json";
 }

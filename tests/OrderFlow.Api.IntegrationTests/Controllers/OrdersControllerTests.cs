@@ -8,7 +8,7 @@ using OrderFlow.Application.TestUtils.Builders.DTOs;
 
 namespace OrderFlow.Api.IntegrationTests.Controllers;
 
-[Collection("DataBase and Queue Tests Collection")]
+[Collection("Orders Containers Tests Collection")]
 public class OrdersControllerTests(OrdersApiFixture fixture) : IClassFixture<OrdersApiFixture>, IAsyncLifetime
 {
     public async ValueTask InitializeAsync()

@@ -1,8 +1,8 @@
 using OrderFlow.Application.Dlq;
 using OrderFlow.Application.Dlq.Commands;
-using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Messaging.DTOs;
 using OrderFlow.Application.TestUtils.Builders.Dlq;
-using OrderFlow.Application.TestUtils.Builders.Messaging;
+using OrderFlow.Application.TestUtils.Builders.DTOs;
 
 namespace OrderFlow.Application.TestUtils.Builders.Commands;
 

@@ -2,14 +2,13 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using OrderFlow.Application.Alerts;
-using OrderFlow.Application.Failures;
+using OrderFlow.Application.Alerts.DTOs;
 using OrderFlow.Application.Failures.DTOs;
-using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Messaging.Identifiers;
 using OrderFlow.Application.TestUtils.Builders.Commands;
 using OrderFlow.Application.TestUtils.Builders.Dlq;
+using OrderFlow.Application.TestUtils.Builders.DTOs;
 using OrderFlow.Application.TestUtils.Builders.Handlers;
-using OrderFlow.Application.TestUtils.Builders.Messaging;
 using OrderFlow.TestCore.Fakes;
 
 namespace OrderFlow.Application.Tests.Dlq.Commands;
@@ -64,7 +63,7 @@ public class ProcessDlqMessageHandlerTests
 
         await failureStore
             .Received(1)
-            .SaveFailedMessageAsync(
+            .SaveAsync(
                 Arg.Is<FailedMessage>(message =>
                     message.MessageId == messageId &&
                     message.QueueIdentifier == QueueIdentifiers.OrderCreated &&
@@ -96,7 +95,7 @@ public class ProcessDlqMessageHandlerTests
         var alertService = builder.FreezeAlertService();
 
         failureStore
-            .SaveFailedMessageAsync(Arg.Any<FailedMessage>(), Arg.Any<CancellationToken>())
+            .SaveAsync(Arg.Any<FailedMessage>(), Arg.Any<CancellationToken>())
             .Throws(fakeException);
         
         var sut = builder.Build();
@@ -139,6 +138,6 @@ public class ProcessDlqMessageHandlerTests
 
         await failureStore
             .Received(1)
-            .SaveFailedMessageAsync(Arg.Any<FailedMessage>(), Arg.Any<CancellationToken>());
+            .SaveAsync(Arg.Any<FailedMessage>(), Arg.Any<CancellationToken>());
     }
 }

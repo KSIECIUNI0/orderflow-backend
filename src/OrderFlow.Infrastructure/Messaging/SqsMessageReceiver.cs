@@ -2,9 +2,10 @@ using Amazon.SQS;
 using Amazon.SQS.Model;
 using Microsoft.Extensions.Options;
 using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Messaging.DTOs;
 using OrderFlow.Infrastructure.Configurations;
 
-namespace OrderFlow.Infrastructure.MessageReceivers;
+namespace OrderFlow.Infrastructure.Messaging;
 
 public class SqsMessageReceiver(
     IAmazonSQS sqs,

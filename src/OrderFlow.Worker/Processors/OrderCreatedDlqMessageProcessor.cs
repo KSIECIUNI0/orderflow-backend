@@ -3,6 +3,8 @@ using OrderFlow.Application.Correlation;
 using OrderFlow.Application.Dlq;
 using OrderFlow.Application.Dlq.Commands;
 using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Messaging.DTOs;
+using OrderFlow.Application.Messaging.Identifiers;
 using OrderFlow.Application.Orders.Events;
 using Serilog.Context;
 

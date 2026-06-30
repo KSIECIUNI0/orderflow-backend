@@ -22,7 +22,8 @@ public class ExceptionHandlingMiddlewareTests
         };
 
         const string exceptionMessage = "Domain exception";
-        RequestDelegate next = _ => throw new FakeDomainException(exceptionMessage);
+        var fakeDomainException = new FakeDomainException(exceptionMessage);
+        RequestDelegate next = _ => throw fakeDomainException;
         
         var sut = new ExceptionHandlingMiddleware();
         
@@ -40,7 +41,7 @@ public class ExceptionHandlingMiddlewareTests
         
         problem.Should().NotBeNull();
         problem.Status.Should().Be(400);
-        problem.Title.Should().Be("Request validation failed");
+        problem.Title.Should().Be(fakeDomainException.ErrorTitle);
         problem.Detail.Should().Be(exceptionMessage);
     }
     

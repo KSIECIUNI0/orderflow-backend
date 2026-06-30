@@ -7,6 +7,11 @@ namespace OrderFlow.Infrastructure.TestUtils.Generators;
 
 public static class S3FileToUploadGenerator
 {
+    public static string BuildKey(
+        string messageId,
+        string queueIdentifier) 
+            => $"{StoreFixture.Prefix}/{queueIdentifier}/{messageId}.json";
+    
     public static IEnumerable<S3Driver.FileToUpload> GenerateValidFilesToUpload(
         int numberOfFiles,
         string queueId)
@@ -46,6 +51,6 @@ public static class S3FileToUploadGenerator
         Enumerable
             .Range(1, numberOfFiles)
             .Select(number => new S3Driver.FileToUpload(
-                $"{StoreFixture.Prefix}/{queueId}/message-{Guid.NewGuid()}.json",
+                BuildKey($"message-{Guid.NewGuid()}", queueId),
                 getContentBody(number)));
 }

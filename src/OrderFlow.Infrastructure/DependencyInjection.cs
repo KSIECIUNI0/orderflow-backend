@@ -6,15 +6,17 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using OrderFlow.Application.Alerts;
+using OrderFlow.Application.EventBus;
 using OrderFlow.Application.Failures;
 using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Messaging.Identifiers;
 using OrderFlow.Application.Orders;
 using OrderFlow.Domain.Abstractions;
 using OrderFlow.Infrastructure.Alerts;
 using OrderFlow.Infrastructure.Configurations;
 using OrderFlow.Infrastructure.EventBus;
 using OrderFlow.Infrastructure.Failures;
-using OrderFlow.Infrastructure.MessageReceivers;
+using OrderFlow.Infrastructure.Messaging;
 using OrderFlow.Infrastructure.Orders;
 using OrderFlow.Infrastructure.Persistence;
 
@@ -32,7 +34,6 @@ public static class DependencyInjection
         services.Configure<OrderCreatedQueueOptions>(configuration.GetRequiredSection("Queues:OrderCreated"));
         services.Configure<OrderCreatedDlqOptions>(configuration.GetRequiredSection("Queues:OrderCreatedDlq"));
         
-        services.AddSingleton<IEventBus, SqsEventBus>();
         services.AddSingleton<IAmazonSQS>(_ =>
         {
             var (serviceUrl, accessKey, secretKey) = GetAwsOptions(configuration);
@@ -61,8 +62,11 @@ public static class DependencyInjection
 
         services.AddScoped<IFailureStore, S3FailureStore>();
         services.AddScoped<IMessageReceiver, SqsMessageReceiver>();
+        services.AddScoped<IMessagePublisher, SqsMessagePublisher>();
+        services.AddScoped<IQueueIdentifierResolver, QueueIdentifierResolver>();
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IEventBus, EventBus.EventBus>();
         
         services.AddHttpClient<IAlertService, AlertService>(client =>
         {

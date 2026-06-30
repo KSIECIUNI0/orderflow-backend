@@ -3,7 +3,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Testing;
 using OrderFlow.Application.Failures.DTOs;
-using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Messaging.Identifiers;
 using OrderFlow.Application.TestUtils.Builders.Failures;
 using OrderFlow.Infrastructure.Failures;
 using OrderFlow.Infrastructure.TestUtils.Builders.Options;
@@ -24,7 +24,7 @@ public class S3FailureStoreTests(StoreFixture fixture) : IClassFixture<StoreFixt
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     
     [Fact]
-    public async Task SaveFailedMessageAsync_ShouldPutFailedMessageInTheBucket()
+    public async Task SaveAsync_ShouldPutFailedMessageInTheBucket()
     {
         // Arrange
         const string queueId = QueueIdentifiers.OrderCreated;
@@ -49,7 +49,7 @@ public class S3FailureStoreTests(StoreFixture fixture) : IClassFixture<StoreFixt
         var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
         
         // Act
-        await sut.SaveFailedMessageAsync(failedMessage, TestContext.Current.CancellationToken);
+        await sut.SaveAsync(failedMessage, TestContext.Current.CancellationToken);
         
         // Assert
         var fileExists = await fixture.Driver.FileExistsAsync(fixture.BucketName, expectedKey, TestContext.Current.CancellationToken);
@@ -193,7 +193,6 @@ public class S3FailureStoreTests(StoreFixture fixture) : IClassFixture<StoreFixt
         const int maxPageSize = 10;
         const string messageId = "abc123";
         const string queueId = QueueIdentifiers.OrderCreated;
-        var key = $"{StoreFixture.Prefix}/{queueId}/{messageId}.json";
         var logger = new FakeLogger<S3FailureStore>();
         var options = new S3FailureStoreOptionsBuilder()
             .WithBucketName(fixture.BucketName)
@@ -206,6 +205,7 @@ public class S3FailureStoreTests(StoreFixture fixture) : IClassFixture<StoreFixt
             .WithMessageId(messageId)
             .WithQueueIdentifier(queueId)
             .Build();
+        var key = S3FileToUploadGenerator.BuildKey(messageId, queueId);
         var file = new S3Driver.FileToUpload(key, JsonSerializer.Serialize(failedMessage));
         await fixture.Driver.PutObjectsAsync(fixture.BucketName, [file], TestContext.Current.CancellationToken);
         
@@ -322,5 +322,173 @@ public class S3FailureStoreTests(StoreFixture fixture) : IClassFixture<StoreFixt
         logs
             .Select(log => log.Level == LogLevel.Warning)
             .Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetFailedMessageAsync_ShouldReturnNull_WhenFileDoesNotExists()
+    {
+        // Arrange
+        const string messageId = "message_id_does_not_exist";
+        const string queueIdentifier = QueueIdentifiers.OrderCreated;
+        
+        var logger = new FakeLogger<S3FailureStore>();
+        var options = new S3FailureStoreOptionsBuilder()
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
+            .Build();
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
+        
+        // Act
+        var act = () => sut.GetFailedMessageAsync(queueIdentifier, messageId, TestContext.Current.CancellationToken);
+        
+        // Assert
+        var result = (await act.Should().NotThrowAsync()).Which;
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetFailedMessageAsync_ShouldReturnNull_WhenFileIsEmpty()
+    {
+        // Arrange
+        var messageId = $"{Guid.NewGuid()}";
+        const string queueIdentifier = QueueIdentifiers.OrderCreated;
+        
+        var logger = new FakeLogger<S3FailureStore>();
+        var options = new S3FailureStoreOptionsBuilder()
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
+            .Build();
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
+        
+        var key = S3FileToUploadGenerator.BuildKey(messageId, queueIdentifier);
+        var file = new S3Driver.FileToUpload(key, "null");
+        await fixture.Driver.PutObjectsAsync(fixture.BucketName, [file], TestContext.Current.CancellationToken);
+        
+        // Act
+        var act = () => sut.GetFailedMessageAsync(queueIdentifier, messageId, TestContext.Current.CancellationToken);
+        
+        // Assert
+        var result = (await act.Should().NotThrowAsync()).Which;
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetFailedMessageAsync_ShouldThrowAJsonException_WhenFileIsInvalid()
+    {
+        // Arrange
+        var messageId = $"{Guid.NewGuid()}";
+        const string queueIdentifier = QueueIdentifiers.OrderCreated;
+        
+        var logger = new FakeLogger<S3FailureStore>();
+        var options = new S3FailureStoreOptionsBuilder()
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
+            .Build();
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
+        
+        var key = S3FileToUploadGenerator.BuildKey(messageId, queueIdentifier);
+        var file = new S3Driver.FileToUpload(key, "invalid content body");
+        await fixture.Driver.PutObjectsAsync(fixture.BucketName, [file], TestContext.Current.CancellationToken);
+        
+        // Act
+        var act = () => sut.GetFailedMessageAsync(queueIdentifier, messageId, TestContext.Current.CancellationToken);
+        
+        // Assert
+        await act.Should().ThrowAsync<JsonException>();
+    }
+
+    [Fact]
+    public async Task GetFailedMessageAsync_ShouldReturnFailedMessage_WhenFileExistAndIsValid()
+    {
+        // Arrange
+        var messageId = $"{Guid.NewGuid()}";
+        var correlationId = $"{Guid.NewGuid()}";
+        const string queueIdentifier = QueueIdentifiers.OrderCreated;
+        const string eventType = "fake event type";
+        const string body = """
+                            {
+                                "fake":"body"
+                            }
+                            """;
+        
+        var logger = new FakeLogger<S3FailureStore>();
+        var options = new S3FailureStoreOptionsBuilder()
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
+            .Build();
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
+
+        var failedMessage = new FailedMessageBuilder()
+            .WithMessageId(messageId)
+            .WithQueueIdentifier(queueIdentifier)
+            .WithCorrelationId(correlationId)
+            .WithEventType(eventType)
+            .WithBody(body)
+            .Build();
+        var key = S3FileToUploadGenerator.BuildKey(messageId, queueIdentifier);
+        var file = new S3Driver.FileToUpload(key, JsonSerializer.Serialize(failedMessage));
+        await fixture.Driver.PutObjectsAsync(fixture.BucketName, [file], TestContext.Current.CancellationToken);
+
+        // Act
+        var result = await sut.GetFailedMessageAsync(queueIdentifier, messageId, TestContext.Current.CancellationToken);
+        
+        // Assert
+        result.Should().NotBeNull();
+        result.MessageId.Should().Be(messageId);
+        result.QueueIdentifier.Should().Be(queueIdentifier);
+        result.CorrelationId.Should().Be(correlationId);
+        result.EventType.Should().Be(eventType);
+        result.Body.Should().Be(body);
+        result.FailedAt.Should().Be(failedMessage.FailedAt);
+    }
+
+    [Fact]
+    public async Task DeleteFailedMessageAsync_ShouldRemoveFileFromBucket_WhenFileExists()
+    {
+        // Arrange
+        var messageId = $"{Guid.NewGuid()}";
+        const string queueIdentifier = QueueIdentifiers.OrderCreated;
+        var logger = new FakeLogger<S3FailureStore>();
+        var options = new S3FailureStoreOptionsBuilder()
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
+            .Build();
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
+
+        var failedMessage = new FailedMessageBuilder()
+            .WithMessageId(messageId)
+            .WithQueueIdentifier(queueIdentifier)
+            .Build();
+        var key = S3FileToUploadGenerator.BuildKey(messageId, queueIdentifier);
+        var file = new S3Driver.FileToUpload(key, JsonSerializer.Serialize(failedMessage));
+        await fixture.Driver.PutObjectsAsync(fixture.BucketName, [file], TestContext.Current.CancellationToken);
+        
+        // Act
+        await sut.DeleteFailedMessageAsync(queueIdentifier, messageId, TestContext.Current.CancellationToken);
+        
+        // Assert
+        var fileExists = await fixture.Driver.FileExistsAsync(fixture.BucketName, messageId, TestContext.Current.CancellationToken);
+        fileExists.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task DeleteFailedMessageAsync_ShouldNotThrowAnException_WhenFileDoesNotExists()
+    {
+        // Arrange
+        const string messageId = "message id does not exists";
+        const string queueIdentifier = QueueIdentifiers.OrderCreated;
+        
+        var logger = new FakeLogger<S3FailureStore>();
+        var options = new S3FailureStoreOptionsBuilder()
+            .WithBucketName(fixture.BucketName)
+            .WithPrefix(StoreFixture.Prefix)
+            .Build();
+        var sut = new S3FailureStore(fixture.Driver.S3Client, options, logger);
+        
+        // Act
+        var act = () => sut.DeleteFailedMessageAsync(queueIdentifier, messageId, TestContext.Current.CancellationToken);
+        
+        // Assert
+        await act.Should().NotThrowAsync();
     }
 }

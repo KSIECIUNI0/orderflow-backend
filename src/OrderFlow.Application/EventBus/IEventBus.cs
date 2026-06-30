@@ -1,6 +1,6 @@
 using OrderFlow.Application.Orders.Events;
 
-namespace OrderFlow.Application.Messaging;
+namespace OrderFlow.Application.EventBus;
 
 public interface IEventBus
 {

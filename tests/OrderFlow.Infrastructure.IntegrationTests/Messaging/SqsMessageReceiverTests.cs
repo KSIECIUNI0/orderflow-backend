@@ -1,11 +1,11 @@
 using System.Text.Json;
 using FluentAssertions;
 using OrderFlow.Application.Orders.Events;
-using OrderFlow.Infrastructure.MessageReceivers;
+using OrderFlow.Infrastructure.Messaging;
 using OrderFlow.Infrastructure.TestUtils.Builders.Options;
 using OrderFlow.Infrastructure.TestUtils.Fixtures;
 
-namespace OrderFlow.Infrastructure.IntegrationTests.MessageReceivers;
+namespace OrderFlow.Infrastructure.IntegrationTests.Messaging;
 
 [Collection("SQS Container Collection")]
 public class SqsMessageReceiverTests(QueueFixture fixture) : IClassFixture<QueueFixture>, IAsyncLifetime

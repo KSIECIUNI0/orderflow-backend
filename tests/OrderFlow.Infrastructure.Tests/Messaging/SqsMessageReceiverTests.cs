@@ -1,7 +1,7 @@
 using FluentAssertions;
 using OrderFlow.Infrastructure.TestUtils.Builders.Messaging;
 
-namespace OrderFlow.Infrastructure.Tests.MessageReceivers;
+namespace OrderFlow.Infrastructure.Tests.Messaging;
 
 public class SqsMessageReceiverTests
 {

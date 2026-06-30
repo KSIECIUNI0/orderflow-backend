@@ -1,4 +1,4 @@
-namespace OrderFlow.Application.Alerts;
+namespace OrderFlow.Application.Alerts.DTOs;
 
 public record AlertRequest
 {

@@ -1,4 +1,4 @@
-namespace OrderFlow.Application.Messaging;
+namespace OrderFlow.Application.Messaging.Identifiers;
 
 public static class QueueIdentifiers
 {

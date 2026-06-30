@@ -3,10 +3,10 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
-using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Messaging.DTOs;
 using OrderFlow.Application.Orders.Commands;
 using OrderFlow.Application.Orders.Events;
-using OrderFlow.Application.TestUtils.Builders.Messaging;
+using OrderFlow.Application.TestUtils.Builders.DTOs;
 using OrderFlow.TestCore.Fakes;
 using OrderFlow.Worker.TestUtils.Builders.Processors;
 

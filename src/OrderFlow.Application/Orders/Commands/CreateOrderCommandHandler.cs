@@ -1,6 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
-using OrderFlow.Application.Messaging;
+using OrderFlow.Application.EventBus;
 using OrderFlow.Application.Orders.DTOs;
 using OrderFlow.Application.Orders.Events;
 using OrderFlow.Domain.Abstractions;

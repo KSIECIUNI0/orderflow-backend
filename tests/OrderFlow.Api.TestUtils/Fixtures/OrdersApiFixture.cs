@@ -19,9 +19,8 @@ public class OrdersApiFixture(
 
     public async ValueTask InitializeAsync()
     {
-        var queueName = $"order-created-{Guid.NewGuid()}";
         SqsDriver = new SqsDriver(sqsFixture.SqsClient);
-        QueueUrl = await SqsDriver.CreateQueueAsync(queueName, TestContext.Current.CancellationToken);
+        QueueUrl = await SqsDriver.CreateQueueAsync($"order-created-{Guid.NewGuid()}", TestContext.Current.CancellationToken);
         
         var dependencyBuilder = new OrderFlowApiDependencyBuilder()
             .WithDb(dbFixture.ConnectionString)

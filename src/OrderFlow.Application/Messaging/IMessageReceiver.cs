@@ -1,3 +1,5 @@
+using OrderFlow.Application.Messaging.DTOs;
+
 namespace OrderFlow.Application.Messaging;
 
 public interface IMessageReceiver

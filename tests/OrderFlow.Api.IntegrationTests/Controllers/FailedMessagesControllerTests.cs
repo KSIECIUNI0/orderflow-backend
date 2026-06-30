@@ -1,19 +1,23 @@
 using System.Net.Http.Json;
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using OrderFlow.Api.TestUtils.Fixtures;
 using OrderFlow.Application.Failures.DTOs;
-using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Messaging.Identifiers;
+using OrderFlow.Application.Orders.Events;
+using OrderFlow.Application.TestUtils.Builders.Failures;
 using OrderFlow.Infrastructure.TestUtils.Generators;
+using OrderFlow.TestCore.Drivers;
 
 namespace OrderFlow.Api.IntegrationTests.Controllers;
 
-[Collection("Store Tests Collection")]
+[Collection("Store Containers Tests Collection")]
 public class FailedMessagesControllerTests(StoreApiFixture fixture) : IClassFixture<StoreApiFixture>, IAsyncLifetime
 {
     public async ValueTask InitializeAsync()
     {
-        await fixture.ClearBucket();
+        await fixture.Clear();
     }
     
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
@@ -169,5 +173,74 @@ public class FailedMessagesControllerTests(StoreApiFixture fixture) : IClassFixt
         problem.Status.Should().Be(400);
         problem.Title.Should().Be("Request validation failed");
         problem.Detail.Should().Contain("pageSize");
+    }
+
+    [Fact]
+    public async Task Resend_ShouldReturn204NoContent_WhenSuccessfullyResendFailedMessage()
+    {
+        // Arrange
+        const string messageId = "abcd1234";
+        var correlationId = Guid.NewGuid().ToString();
+        var orderId = Guid.NewGuid();
+        const string queueIdentifier = QueueIdentifiers.OrderCreated;
+
+        var @event = new OrderCreatedEvent(orderId);
+        var failedMessage = new FailedMessageBuilder()
+            .WithMessageId(messageId)
+            .WithQueueIdentifier(queueIdentifier)
+            .WithCorrelationId(correlationId)
+            .WithBody(JsonSerializer.Serialize(@event))
+            .Build();
+        var key = S3FileToUploadGenerator.BuildKey(messageId, queueIdentifier);
+        var file = new S3Driver.FileToUpload(key, JsonSerializer.Serialize(failedMessage));
+        await fixture.S3Driver.PutObjectsAsync(fixture.BucketName, [file], TestContext.Current.CancellationToken);
+        
+        // Act
+        var response = await fixture.HttpClient.PostAsync($"/api/failed-messages/{queueIdentifier}/{messageId}/resend", null, TestContext.Current.CancellationToken);
+        
+        // Assert
+        response.Should()
+            .Be204NoContent()
+            .And.HaveHeader("X-Correlation-ID").And.NotBeEmpty();
+
+        var messages = await fixture.SqsDriver.ReadAllAsync(fixture.QueueUrl, TestContext.Current.CancellationToken);
+        messages.Should().NotBeNullOrEmpty();
+        messages.Should().HaveCount(1);
+        var message = messages.First();
+        
+        var messageCorrelationId = message.MessageAttributes.TryGetValue("CorrelationId", out var attr)
+            ? attr.StringValue
+            : null;
+        messageCorrelationId.Should().NotBeNullOrEmpty();
+        messageCorrelationId.Should().Be(correlationId);
+        
+        var messageBody = JsonSerializer.Deserialize<OrderCreatedEvent>(message.Body);
+        messageBody.Should().NotBeNull();
+        messageBody.OrderId.Should().Be(orderId);
+        
+        var fileExist = await fixture.S3Driver.FileExistsAsync(fixture.BucketName, key, TestContext.Current.CancellationToken);
+        fileExist.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Resend_ShouldReturn400BadRequest_WhenFileDoesNotExists()
+    {
+        // Arrange
+        const string messageId = "message_id_does_not_exist";
+        const string queueIdentifier = QueueIdentifiers.OrderCreated;
+        
+        // Act
+        var response = await fixture.HttpClient.PostAsync($"/api/failed-messages/{queueIdentifier}/{messageId}/resend", null, TestContext.Current.CancellationToken);
+        
+        // Assert
+        response.Should()
+            .Be400BadRequest()
+            .And.HaveHeader("X-Correlation-ID").And.NotBeEmpty();
+        var problem = await response.Content.ReadFromJsonAsync<ProblemDetails>(TestContext.Current.CancellationToken);
+        
+        problem.Should().NotBeNull();
+        problem.Status.Should().Be(400);
+        problem.Title.Should().Be("Failed message not found");
+        problem.Detail.Should().Be($"Failed message {messageId} was not found");
     }
 }

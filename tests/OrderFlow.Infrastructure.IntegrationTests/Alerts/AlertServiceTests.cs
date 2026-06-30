@@ -1,7 +1,7 @@
 using System.Text.Json;
 using FluentAssertions;
-using OrderFlow.Application.Alerts;
-using OrderFlow.Application.TestUtils.Builders.Alerts;
+using OrderFlow.Application.Alerts.DTOs;
+using OrderFlow.Application.TestUtils.Builders.DTOs;
 using OrderFlow.Infrastructure.Alerts;
 using OrderFlow.Infrastructure.TestUtils.Fixtures;
 

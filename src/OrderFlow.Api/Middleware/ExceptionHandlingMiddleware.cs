@@ -12,10 +12,13 @@ public class ExceptionHandlingMiddleware : IMiddleware
         {
             await next(context);
         }
-        catch (Exception ex) when (
-            ex is DomainException or ArgumentException)
+        catch (ArgumentException ex)
         {
             await WriteError(context, ex.Message, "Request validation failed", HttpStatusCode.BadRequest);
+        }
+        catch (DomainException ex)
+        {
+            await WriteError(context, ex.Message, ex.ErrorTitle, HttpStatusCode.BadRequest);
         }
         catch (Exception ex)
         {

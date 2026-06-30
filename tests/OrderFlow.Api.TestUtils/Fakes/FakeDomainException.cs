@@ -4,4 +4,5 @@ namespace OrderFlow.Api.TestUtils.Fakes;
 
 public class FakeDomainException(string message) : DomainException(message)
 {
+    public override string ErrorTitle => "Fake error title";
 }

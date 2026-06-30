@@ -1,6 +1,6 @@
-using OrderFlow.Application.Messaging;
+using OrderFlow.Application.Messaging.DTOs;
 
-namespace OrderFlow.Application.TestUtils.Builders.Messaging;
+namespace OrderFlow.Application.TestUtils.Builders.DTOs;
 
 public class QueueMessageBuilder
 {

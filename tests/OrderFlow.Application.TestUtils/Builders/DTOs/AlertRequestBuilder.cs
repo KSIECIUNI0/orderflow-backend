@@ -1,6 +1,6 @@
-using OrderFlow.Application.Alerts;
+using OrderFlow.Application.Alerts.DTOs;
 
-namespace OrderFlow.Application.TestUtils.Builders.Alerts;
+namespace OrderFlow.Application.TestUtils.Builders.DTOs;
 
 public class AlertRequestBuilder
 {
