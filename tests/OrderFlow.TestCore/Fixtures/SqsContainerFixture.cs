@@ -8,9 +8,8 @@ namespace OrderFlow.TestCore.Fixtures;
 public class SqsContainerFixture : IAsyncLifetime
 {
     private readonly LocalStackContainer _container = new LocalStackBuilder()
-        .WithImage("localstack/localstack:3.0")
+        .WithImage("localstack/localstack:3.0.2")
         .WithEnvironment("SERVICES", "sqs")
-        .WithEnvironment("DEFAULT_REGION", "us-east-1")
         .Build();
     
     public IAmazonSQS SqsClient { get; private set; } = null!;
@@ -25,6 +24,7 @@ public class SqsContainerFixture : IAsyncLifetime
             new BasicAWSCredentials("test", "test"),
             new AmazonSQSConfig
             {
+                AuthenticationRegion = "us-east-1",
                 ServiceURL = SqsUrl,
                 UseHttp = true
             });
