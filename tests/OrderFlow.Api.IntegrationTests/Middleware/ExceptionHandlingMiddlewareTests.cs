@@ -2,6 +2,8 @@ using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Testing;
 using OrderFlow.Api.Middleware;
 using OrderFlow.Api.TestUtils.Fakes;
 
@@ -24,8 +26,9 @@ public class ExceptionHandlingMiddlewareTests
         const string exceptionMessage = "Domain exception";
         var fakeDomainException = new FakeDomainException(exceptionMessage);
         RequestDelegate next = _ => throw fakeDomainException;
-        
-        var sut = new ExceptionHandlingMiddleware();
+
+        var logger = new FakeLogger<ExceptionHandlingMiddleware>();
+        var sut = new ExceptionHandlingMiddleware(logger);
         
         // Act
         await sut.InvokeAsync(context, next);
@@ -60,7 +63,8 @@ public class ExceptionHandlingMiddlewareTests
         const string exceptionMessage = "Argument exception";
         RequestDelegate next = _ => throw new ArgumentException(exceptionMessage);
         
-        var sut = new ExceptionHandlingMiddleware();
+        var logger = new FakeLogger<ExceptionHandlingMiddleware>();
+        var sut = new ExceptionHandlingMiddleware(logger);
         
         // Act
         await sut.InvokeAsync(context, next);
@@ -84,6 +88,9 @@ public class ExceptionHandlingMiddlewareTests
     public async Task InvokeAsync_ShouldWriteError_WhenRequestDelegateThrowAnException()
     {
         // Arrange
+        const string requestMethod = "POST";
+        const string requestPath = "/orders";
+        var correlationId = $"{Guid.NewGuid()}";
         var context = new DefaultHttpContext
         {
             Response =
@@ -91,11 +98,15 @@ public class ExceptionHandlingMiddlewareTests
                 Body = new MemoryStream()
             }
         };
+        context.Request.Headers.Append("X-Correlation-Id", correlationId);
+        context.Request.Method = requestMethod;
+        context.Request.Path = requestPath;
 
         const string exceptionMessage = "Exception";
         RequestDelegate next = _ => throw new Exception(exceptionMessage);
         
-        var sut = new ExceptionHandlingMiddleware();
+        var logger = new FakeLogger<ExceptionHandlingMiddleware>();
+        var sut = new ExceptionHandlingMiddleware(logger);
         
         // Act
         await sut.InvokeAsync(context, next);
@@ -111,7 +122,22 @@ public class ExceptionHandlingMiddlewareTests
         
         problem.Should().NotBeNull();
         problem.Status.Should().Be(500);
-        problem.Title.Should().Be("Unexpected error occured");
-        problem.Detail.Should().Be(exceptionMessage);
+        problem.Title.Should().Be("Unexpected error occurred");
+        problem.Detail.Should().Be("An unexpected error occurred.");
+
+        var log = logger.Collector.GetSnapshot()
+            .FirstOrDefault(l => l.Level == LogLevel.Error);
+
+        log.Should().NotBeNull();
+        log.State.Should().NotBeNull();
+        var logState = log.State
+            .Should()
+            .BeAssignableTo<IEnumerable<KeyValuePair<string, string>>>()
+            .Subject;
+        logState
+            .Should()
+            .ContainKeys("Method", "Path", "CorrelationId")
+            .And
+            .ContainValues(requestMethod, requestPath, correlationId);
     }
 }

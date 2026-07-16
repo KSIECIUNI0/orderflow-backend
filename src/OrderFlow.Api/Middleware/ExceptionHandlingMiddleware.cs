@@ -4,7 +4,7 @@ using OrderFlow.Domain.Abstractions;
 
 namespace OrderFlow.Api.Middleware;
 
-public class ExceptionHandlingMiddleware : IMiddleware
+public class ExceptionHandlingMiddleware(ILogger<ExceptionHandlingMiddleware> logger) : IMiddleware
 {
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
@@ -22,7 +22,22 @@ public class ExceptionHandlingMiddleware : IMiddleware
         }
         catch (Exception ex)
         {
-            await WriteError(context, ex.Message, "Unexpected error occured", HttpStatusCode.InternalServerError);
+            var correlationId = context.Request.Headers.TryGetValue("X-Correlation-Id", out var headerValue) 
+                ? headerValue.ToString() 
+                : "UNKNOWN";
+            
+            logger.LogError(
+                ex,
+                "Unhandled exception while processing {Method} {Path}. CorrelationId: {CorrelationId}",
+                context.Request.Method,
+                context.Request.Path,
+                correlationId);
+            
+            await WriteError(
+                context,
+                "An unexpected error occurred.", 
+                "Unexpected error occurred",
+                HttpStatusCode.InternalServerError);
         }
     }
 

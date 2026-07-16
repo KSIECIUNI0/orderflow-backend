@@ -21,6 +21,11 @@ public class OrderRepository(OrderFlowDbContext db) : IOrderRepository
     {
         return await db.Orders.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
+    
+    public async Task<Order?> GetTrackedByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await db.Orders.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
 
     public void Update(Order order)
     {

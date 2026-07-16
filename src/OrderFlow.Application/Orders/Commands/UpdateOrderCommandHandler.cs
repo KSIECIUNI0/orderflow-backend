@@ -10,7 +10,7 @@ public class UpdateOrderCommandHandler(
 {
     public async Task<bool> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
     {
-        var order = await orderRepository.GetByIdAsync(request.Id, cancellationToken);
+        var order = await orderRepository.GetTrackedByIdAsync(request.Id, cancellationToken);
         if (order is null)
             return false;
 
