@@ -23,7 +23,7 @@ public class UpdateOrderCommandHandlerTests
         var unitOfWork = builder.FreezeUnitOfWork();
 
         repository
-            .GetByIdAsync(
+            .GetTrackedByIdAsync(
                 Arg.Is<Guid>(id => id == orderId),
                 Arg.Any<CancellationToken>())
             .Returns(null as Order);
@@ -36,7 +36,7 @@ public class UpdateOrderCommandHandlerTests
         // Assert
         await repository
             .Received(1)
-            .GetByIdAsync(
+            .GetTrackedByIdAsync(
                 Arg.Is<Guid>(id => id == orderId),
                 Arg.Any<CancellationToken>());
         repository
@@ -70,7 +70,7 @@ public class UpdateOrderCommandHandlerTests
         var unitOfWork = builder.FreezeUnitOfWork();
         
         repository
-            .GetByIdAsync(
+            .GetTrackedByIdAsync(
                 Arg.Is<Guid>(id => id == orderId),
                 Arg.Any<CancellationToken>())
             .Returns(order);
@@ -83,7 +83,7 @@ public class UpdateOrderCommandHandlerTests
         // Assert
         await repository
             .Received(1)
-            .GetByIdAsync(
+            .GetTrackedByIdAsync(
                 Arg.Is<Guid>(id => id == orderId),
                 Arg.Any<CancellationToken>());
         repository
@@ -110,7 +110,7 @@ public class UpdateOrderCommandHandlerTests
         var repository = builder.FreezeOrderRepository();
 
         repository
-            .GetByIdAsync(
+            .GetTrackedByIdAsync(
                 Arg.Any<Guid>(),
                 Arg.Any<CancellationToken>())
             .Throws(new InvalidOperationException(dbErrorMessage));
