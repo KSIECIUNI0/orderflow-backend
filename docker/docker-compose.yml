@@ -19,7 +19,7 @@ services:
       timeout: 2s
       retries: 10
     volumes:
-      - "./localstack:/var/lib/localstack"
+      - "./localstack-data:/var/lib/localstack"
       - "/var/run/docker.sock:/var/run/docker.sock"
       - "./localstack-init:/etc/localstack/init/ready.d"
       
@@ -48,7 +48,7 @@ services:
       POSTGRES_PASSWORD: orderflow
       POSTGRES_DB: orderflow
     volumes:
-      - "./pgdata:/var/lib/postgresql/data"
+      - "./pg-data:/var/lib/postgresql/data"
         
   seq:
     image: datalust/seq:latest
@@ -68,3 +68,36 @@ services:
     container_name: orderflow-alertservice
     ports:
       - "8085:8080"
+    
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: orderflow-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - "./prometheus-init/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "./prometheus-data:/prometheus"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    restart: unless-stopped
+    
+  grafana:
+    image: grafana/grafana:latest
+    container_name: orderflow-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - "./grafana-data:/var/lib/grafana"
+      - "./grafana-init/provisioning:/etc/grafana/provisioning"
+      - "./grafana-init/dashboards:/var/lib/grafana/dashboards"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:

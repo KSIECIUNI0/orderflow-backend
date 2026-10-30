@@ -1,0 +1,5 @@
+@host = http://localhost:5270
+
+### Get api metrics
+GET {{host}}/metrics
+Content-Type: application/json

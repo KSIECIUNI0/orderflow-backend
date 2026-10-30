@@ -1,0 +1,31 @@
+@host = http://localhost:5270
+@orderId = 0cbc6840-66bd-494b-a98c-3fee681ef2ab
+
+### Create Order
+POST {{host}}/api/orders
+Content-Type: application/json
+
+{
+  "productName": "CocaCola",
+  "quantity": 1
+}
+
+### Get all orders
+GET {{host}}/api/orders
+Content-Type: application/json
+
+### Get by Id
+GET {{host}}/api/orders/{{orderId}}
+Content-Type: application/json
+
+### Update order
+PUT {{host}}/api/orders/{{orderId}}
+Content-Type: application/json
+
+{
+  "productName": "Fanta",
+  "quantity": 99
+}
+
+### Delete order
+DELETE {{host}}/api/orders/{{orderId}}

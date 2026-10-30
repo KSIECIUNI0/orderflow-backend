@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using OrderFlow.Application.EventBus;
+using OrderFlow.Application.Metrics;
 using OrderFlow.Application.Orders.DTOs;
 using OrderFlow.Application.Orders.Events;
 using OrderFlow.Domain.Abstractions;
@@ -12,20 +14,36 @@ public class CreateOrderCommandHandler(
     IOrderRepository orderRepository,
     IUnitOfWork unitOfWork,
     IEventBus eventBus,
+    OrderFlowMetrics metrics,
     ILogger<CreateOrderCommandHandler> logger)
     : IRequestHandler<CreateOrderCommand, OrderResponse>
 {
     public async Task<OrderResponse> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
     {
-        var order = new Order(request.ProductName, request.Quantity);
-        var saved = await orderRepository.AddAsync(order, cancellationToken);
-        await unitOfWork.SaveChangesAsync(cancellationToken);
-        logger.LogInformation("Order created in DB with ID {OrderId}", saved.Id);
-        
-        var @event = new OrderCreatedEvent(OrderId: saved.Id);
-        await eventBus.PublishOrderCreatedAsync(@event, request.CorrelationId, cancellationToken);
-        logger.LogInformation("OrderCreatedEvent sent to queue for Order:{OrderId} with CorrelationId:{CorrelationId}", saved.Id, request.CorrelationId);
-        
-        return new OrderResponse(saved.Id, saved.ProductName, saved.Quantity);
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            var order = new Order(request.ProductName, request.Quantity);
+            var saved = await orderRepository.AddAsync(order, cancellationToken);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Order created in DB with ID {OrderId}", saved.Id);
+
+            var @event = new OrderCreatedEvent(OrderId: saved.Id);
+            await eventBus.PublishOrderCreatedAsync(@event, request.CorrelationId, cancellationToken);
+            logger.LogInformation(
+                "OrderCreatedEvent sent to queue for Order:{OrderId} with CorrelationId:{CorrelationId}", saved.Id,
+                request.CorrelationId);
+
+            stopwatch.Stop();
+            metrics.RecordOrderCreationSucceeded(stopwatch.Elapsed.TotalSeconds);
+
+            return new OrderResponse(saved.Id, saved.ProductName, saved.Quantity);
+        }
+        catch
+        {
+            stopwatch.Stop();
+            metrics.RecordOrderCreationFailed(stopwatch.Elapsed.TotalSeconds);
+            throw;
+        }
     }
 }

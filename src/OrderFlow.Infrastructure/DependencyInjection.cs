@@ -5,6 +5,7 @@ using Amazon.SQS;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OrderFlow.Application.Alerts;
 using OrderFlow.Application.EventBus;
 using OrderFlow.Application.Failures;
@@ -14,7 +15,6 @@ using OrderFlow.Application.Orders;
 using OrderFlow.Domain.Abstractions;
 using OrderFlow.Infrastructure.Alerts;
 using OrderFlow.Infrastructure.Configurations;
-using OrderFlow.Infrastructure.EventBus;
 using OrderFlow.Infrastructure.Failures;
 using OrderFlow.Infrastructure.Messaging;
 using OrderFlow.Infrastructure.Orders;
@@ -29,32 +29,58 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<S3FailureStoreOptions>(configuration.GetRequiredSection("S3FailureStore"));
-        services.Configure<SqsOptions>(configuration.GetRequiredSection("Sqs"));
-        services.Configure<OrderCreatedQueueOptions>(configuration.GetRequiredSection("Queues:OrderCreated"));
-        services.Configure<OrderCreatedDlqOptions>(configuration.GetRequiredSection("Queues:OrderCreatedDlq"));
+        services
+            .AddOptions<AwsOptions>()
+            .BindConfiguration(AwsOptions.SectionName)
+            .Validate(
+                AwsOptions.HasValidConfiguration,
+                "AWS configuration is invalid.")
+            .ValidateOnStart();
+        services
+            .AddOptions<AlertServiceOptions>()
+            .BindConfiguration(AlertServiceOptions.SectionName)
+            .Validate(
+                AlertServiceOptions.HasValidConfiguration,
+                "AlertService configuration is invalid.")
+            .ValidateOnStart();
+        services
+            .AddOptions<SqsOptions>()
+            .BindConfiguration(SqsOptions.SectionName);
+        services
+            .AddOptions<S3FailureStoreOptions>()
+            .BindConfiguration(S3FailureStoreOptions.SectionName);
+        services
+            .AddOptions<OrderCreatedQueueOptions>()
+            .BindConfiguration(OrderCreatedQueueOptions.SectionName);
+        services
+            .AddOptions<OrderCreatedDlqOptions>()
+            .BindConfiguration(OrderCreatedDlqOptions.SectionName);
         
-        services.AddSingleton<IAmazonSQS>(_ =>
+        services.AddSingleton<IAmazonSQS>(serviceProvider =>
         {
-            var (serviceUrl, accessKey, secretKey) = GetAwsOptions(configuration);
+            var options = serviceProvider
+                .GetRequiredService<IOptions<AwsOptions>>()
+                .Value;
 
             return new AmazonSQSClient(
-                new BasicAWSCredentials(accessKey, secretKey),
+                new BasicAWSCredentials(options.AccessKey, options.SecretKey),
                 new AmazonSQSConfig
                 {
-                    ServiceURL = serviceUrl,
+                    ServiceURL = options.ServiceUrl,
                     UseHttp = true
                 });
         });
-        services.AddSingleton<IAmazonS3>(_ =>
+        services.AddSingleton<IAmazonS3>(serviceProvider =>
         {
-            var (serviceUrl, accessKey, secretKey) = GetAwsOptions(configuration);
+            var options = serviceProvider
+                .GetRequiredService<IOptions<AwsOptions>>()
+                .Value;
 
             return new AmazonS3Client(
-                new BasicAWSCredentials(accessKey, secretKey),
+                new BasicAWSCredentials(options.AccessKey, options.SecretKey),
                 new AmazonS3Config
                 {
-                    ServiceURL = serviceUrl,
+                    ServiceURL = options.ServiceUrl,
                     ForcePathStyle = true,
                     UseHttp = true
                 });
@@ -68,10 +94,13 @@ public static class DependencyInjection
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IEventBus, EventBus.EventBus>();
         
-        services.AddHttpClient<IAlertService, AlertService>(client =>
+        services.AddHttpClient<IAlertService, AlertService>((serviceProvider, client) =>
         {
-            var host = GetAlertServiceHost(configuration);
-            client.BaseAddress = new Uri(host);
+            var options = serviceProvider
+                .GetRequiredService<IOptions<AlertServiceOptions>>()
+                .Value;
+
+            client.BaseAddress = new Uri(options.Host);
         });
         services.AddDbContext<OrderFlowDbContext>(options =>
         {
@@ -79,30 +108,5 @@ public static class DependencyInjection
         });
 
         return services;
-    }
-
-    private static (string, string, string) GetAwsOptions(IConfiguration configuration)
-    {
-        var awsConfig = configuration.GetRequiredSection("AWS");
-        
-        var serviceUrl = awsConfig.GetValue<string>("ServiceUrl");
-        var accessKey = awsConfig.GetValue<string>("AccessKey");
-        var secretKey = awsConfig.GetValue<string>("SecretKey");
-        
-        ArgumentException.ThrowIfNullOrEmpty(serviceUrl);
-        ArgumentException.ThrowIfNullOrEmpty(accessKey);
-        ArgumentException.ThrowIfNullOrEmpty(secretKey);
-        
-        return (serviceUrl, accessKey, secretKey);
-    }
-
-    private static string GetAlertServiceHost(IConfiguration configuration)
-    {
-        var alertConfig = configuration.GetRequiredSection("AlertService");
-        var host = alertConfig.GetValue<string>("Host");
-    
-        ArgumentException.ThrowIfNullOrEmpty(host);
-
-        return host;
     }
 }

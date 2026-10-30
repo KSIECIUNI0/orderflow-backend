@@ -22,9 +22,12 @@ builder.Logging.AddSerilog(logger);
 builder.Services
     .AddApplication()
     .AddInfrastructure(builder.Configuration)
-    .AddApi();
+    .AddApi(builder.Configuration);
 
 var app = builder.Build();
+
+app.MapPrometheusScrapingEndpoint()
+    .DisableHttpMetrics();
 
 if (app.Environment.IsDevelopment())
 {
