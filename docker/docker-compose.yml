@@ -76,6 +76,7 @@ services:
       - "9090:9090"
     volumes:
       - "./prometheus-init/prometheus.yml:/etc/prometheus/prometheus.yml:ro"
+      - "./prometheus-init/orderflow-alerts.yml:/etc/prometheus/orderflow-alerts.yml:ro"
       - "./prometheus-data:/prometheus"
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
